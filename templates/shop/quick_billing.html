@@ -135,8 +135,14 @@
 
 {% block content %}
 <div class="page-header mb-3">
-    <h1><i class="bi bi-lightning-charge-fill me-2"></i>Quick Billing</h1>
-    <span class="badge bg-primary" id="currentTime"></span>
+    <div>
+        <h1><i class="bi bi-lightning-charge-fill me-2"></i>Quick Billing</h1>
+        <small class="text-muted">Logged in as {{ user_name }} ({{ user_role }})</small>
+    </div>
+    <div class="d-flex gap-2 align-items-center">
+        <small class="badge bg-secondary" id="sessionInfo">Session: Active</small>
+        <span class="badge bg-primary" id="currentTime"></span>
+    </div>
 </div>
 
 <div class="billing-container">
@@ -173,6 +179,24 @@
             </div>
         </div>
 
+
+        <!-- Stitching Type Selection -->
+        <div class="card mb-3">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="mb-0">Stitching Type</h6>
+            </div>
+            <div class="card-body">
+                <select id="stitchingType" class="form-select">
+                    <option value="">Select stitching type...</option>
+                    {% for st in stitching_types %}
+                    <option value="{{ st.id }}" data-price-multiplier="{{ st.price_multiplier }}">
+                        {{ st.name }} ({{ st.price_multiplier }}x price)
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        
         <!-- Garment Selection -->
         <div class="card mb-3">
             <div class="card-header d-flex justify-content-between align-items-center">
@@ -192,22 +216,7 @@
             </div>
         </div>
 
-        <!-- Stitching Type Selection -->
-        <div class="card mb-3">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h6 class="mb-0">Stitching Type</h6>
-            </div>
-            <div class="card-body">
-                <select id="stitchingType" class="form-select">
-                    <option value="">Select stitching type...</option>
-                    {% for st in stitching_types %}
-                    <option value="{{ st.id }}" data-price-multiplier="{{ st.price_multiplier }}">
-                        {{ st.name }} ({{ st.price_multiplier }}x price)
-                    </option>
-                    {% endfor %}
-                </select>
-            </div>
-        </div>
+        
 
         <!-- Current Bill Items -->
         <div class="card">

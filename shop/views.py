@@ -3,7 +3,8 @@ Views for Tailoring Shop Management System
 """
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, logout, authenticate
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib import messages
 from django.http import JsonResponse, HttpResponse
 from django.db.models import Sum, Count, Q, F
@@ -137,6 +138,41 @@ def customer_list(request):
     customers = paginator.get_page(page)
     
     return render(request, 'shop/customer_list.html', {'customers': customers, 'query': query})
+
+
+@login_required
+def customer_search(request):
+    """API endpoint for customer search in quick billing"""
+    if not request.user.is_staff:
+        return JsonResponse({'error': 'Access denied'}, status=403)
+    
+    query = request.GET.get('q', '').strip()
+    
+    if len(query) < 2:
+        return JsonResponse({'customers': []})
+    
+    try:
+        customers = Customer.objects.filter(
+            Q(name__icontains=query) |
+            Q(phone__icontains=query)
+        ).order_by('name')[:10]
+        
+        customer_data = []
+        for customer in customers:
+            customer_data.append({
+                'id': customer.id,
+                'name': customer.name,
+                'phone': customer.phone,
+                'address': customer.address or '',
+                'email': customer.email or '',
+                'total_orders': customer.total_orders,
+                'last_order_date': customer.orders.first().created_at.strftime('%Y-%m-%d') if customer.orders.exists() else None
+            })
+        
+        return JsonResponse({'customers': customer_data})
+        
+    except Exception as e:
+        return JsonResponse({'error': f'Search failed: {str(e)}'}, status=500)
 
 
 @login_required
@@ -524,15 +560,31 @@ def order_delete(request, pk):
 @login_required
 def quick_billing(request):
     """Main quick billing interface"""
-    customers = Customer.objects.all()[:50]
-    garment_types = GarmentType.objects.filter(is_active=True)
-    stitching_types = StitchingType.objects.filter(is_active=True)
+    # Check if user has necessary permissions
+    if not request.user.is_staff:
+        messages.error(request, 'Access denied. Staff privileges required for billing.')
+        return redirect('dashboard')
     
-    return render(request, 'shop/quick_billing.html', {
-        'customers': customers,
-        'garment_types': garment_types,
-        'stitching_types': stitching_types,
-    })
+    try:
+        customers = Customer.objects.all().order_by('name')[:50]
+        garment_types = GarmentType.objects.filter(is_active=True).order_by('name')
+        stitching_types = StitchingType.objects.filter(is_active=True).order_by('name')
+        
+        # Add user info to context for session management
+        context = {
+            'customers': customers,
+            'garment_types': garment_types,
+            'stitching_types': stitching_types,
+            'user_name': request.user.get_full_name() or request.user.username,
+            'user_role': 'Admin' if request.user.is_superuser else 'Staff',
+            'session_timeout': getattr(request.session, 'get_expiry_age', lambda: 3600)() // 60,  # minutes
+        }
+        
+        return render(request, 'shop/quick_billing.html', context)
+        
+    except Exception as e:
+        messages.error(request, f'Error loading billing interface: {str(e)}')
+        return redirect('dashboard')
 
 
 @login_required
