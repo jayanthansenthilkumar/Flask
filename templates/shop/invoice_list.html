@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Invoices - TailorShop{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1><i class="bi bi-receipt me-2"></i>Invoices</h1>
+</div>
+
+<!-- Filters -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-6">
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                    <input type="text" name="q" class="form-control" placeholder="Search invoice #, order #, customer..." value="{{ query }}">
+                </div>
+            </div>
+            <div class="col-md-3">
+                <select name="status" class="form-select">
+                    <option value="">All Status</option>
+                    <option value="paid" {% if status == 'paid' %}selected{% endif %}>Paid</option>
+                    <option value="partial" {% if status == 'partial' %}selected{% endif %}>Partial</option>
+                    <option value="unpaid" {% if status == 'unpaid' %}selected{% endif %}>Unpaid</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-funnel me-1"></i>Filter
+                </button>
+                <a href="{% url 'invoice_list' %}" class="btn btn-outline-secondary">Clear</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Invoices Table -->
+<div class="table-container">
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Invoice #</th>
+                <th>Order</th>
+                <th>Customer</th>
+                <th>Date</th>
+                <th>Total</th>
+                <th>Paid</th>
+                <th>Balance</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for invoice in invoices %}
+            <tr>
+                <td><strong>{{ invoice.invoice_number }}</strong></td>
+                <td>
+                    <a href="{% url 'order_detail' invoice.order.pk %}">{{ invoice.order.order_number }}</a>
+                </td>
+                <td>
+                    <a href="{% url 'customer_detail' invoice.order.customer.pk %}">{{ invoice.order.customer.name }}</a>
+                    <br><small class="text-muted">{{ invoice.order.customer.phone }}</small>
+                </td>
+                <td>{{ invoice.created_at|date:"d M Y" }}</td>
+                <td>₹{{ invoice.total|floatformat:0|intcomma }}</td>
+                <td class="text-success">₹{{ invoice.paid_amount|floatformat:0|intcomma }}</td>
+                <td class="{% if invoice.balance_amount > 0 %}text-danger{% endif %}">
+                    ₹{{ invoice.balance_amount|floatformat:0|intcomma }}
+                </td>
+                <td>
+                    <span class="badge badge-{{ invoice.payment_status|lower }}">{{ invoice.payment_status }}</span>
+                </td>
+                <td>
+                    <a href="{% url 'invoice_detail' invoice.pk %}" class="btn btn-sm btn-outline-primary" title="View">
+                        <i class="bi bi-eye"></i>
+                    </a>
+                    <a href="{% url 'invoice_print' invoice.pk %}" class="btn btn-sm btn-outline-secondary" title="Print" target="_blank">
+                        <i class="bi bi-printer"></i>
+                    </a>
+                    {% if invoice.balance_amount > 0 %}
+                    <a href="{% url 'payment_add' invoice.pk %}" class="btn btn-sm btn-outline-success" title="Add Payment">
+                        <i class="bi bi-cash"></i>
+                    </a>
+                    {% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="9" class="text-center py-5">
+                    <i class="bi bi-receipt display-4 text-muted"></i>
+                    <p class="text-muted mt-2">No invoices found</p>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

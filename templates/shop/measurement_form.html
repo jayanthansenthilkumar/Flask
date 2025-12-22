@@ -1,0 +1,115 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }} - TailorShop{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-1">
+                <li class="breadcrumb-item"><a href="{% url 'customer_list' %}">Customers</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'customer_detail' customer.pk %}">{{ customer.name }}</a></li>
+                <li class="breadcrumb-item active">{{ title }}</li>
+            </ol>
+        </nav>
+        <h1><i class="bi bi-rulers me-2"></i>{{ title }}</h1>
+    </div>
+</div>
+
+<form method="post" id="measurementForm">
+    {% csrf_token %}
+    
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="bi bi-tag me-2"></i>Profile Details
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label class="form-label">Profile Name</label>
+                            {{ profile_form.profile_name }}
+                            <small class="text-muted">e.g., Default, Formal, Casual</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <i class="bi bi-rulers me-2"></i>Measurements
+                </div>
+                <div class="card-body">
+                    <div class="row" id="measurementsContainer">
+                        {% for key, label in measurement_keys %}
+                        <div class="col-md-4 col-6 mb-3">
+                            <label class="form-label small">{{ label }}</label>
+                            <div class="input-group input-group-sm">
+                                <input type="hidden" name="measurement_key" value="{{ key }}">
+                                <input type="number" name="measurement_value" class="form-control" 
+                                       step="0.25" min="0" placeholder="0.00"
+                                       {% if existing_measurements %}{% if key in existing_measurements %}value="{{ existing_measurements|get_item:key|floatformat:2 }}"{% endif %}{% endif %}>
+                                <select name="measurement_unit" class="form-select" style="max-width: 80px;">
+                                    <option value="inch">in</option>
+                                    <option value="cm">cm</option>
+                                </select>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <!-- Measurement Guide -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="bi bi-info-circle me-2"></i>Measurement Guide
+                </div>
+                <div class="card-body">
+                    <p class="small text-muted mb-2"><strong>Upper Body:</strong></p>
+                    <ul class="small mb-3">
+                        <li><strong>Chest:</strong> Around fullest part</li>
+                        <li><strong>Waist:</strong> Natural waistline</li>
+                        <li><strong>Shoulder:</strong> Shoulder to shoulder</li>
+                        <li><strong>Sleeve:</strong> Shoulder to wrist</li>
+                    </ul>
+                    
+                    <p class="small text-muted mb-2"><strong>Lower Body:</strong></p>
+                    <ul class="small mb-0">
+                        <li><strong>Hip:</strong> Around fullest part</li>
+                        <li><strong>Inseam:</strong> Crotch to ankle</li>
+                        <li><strong>Thigh:</strong> Around fullest part</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- Actions -->
+            <div class="card">
+                <div class="card-body">
+                    <button type="submit" class="btn btn-primary w-100 mb-2">
+                        <i class="bi bi-check-lg me-2"></i>Save Measurements
+                    </button>
+                    <a href="{% url 'customer_detail' customer.pk %}" class="btn btn-outline-secondary w-100">
+                        Cancel
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Auto-fill existing measurements if editing
+{% if existing_measurements %}
+document.addEventListener('DOMContentLoaded', function() {
+    const existingMeasurements = {{ existing_measurements|safe }};
+    // Implementation for pre-filling values
+});
+{% endif %}
+</script>
+{% endblock %}

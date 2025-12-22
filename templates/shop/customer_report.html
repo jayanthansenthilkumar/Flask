@@ -1,0 +1,152 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Customer Report - TailorShop{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-1">
+                <li class="breadcrumb-item"><a href="{% url 'reports' %}">Reports</a></li>
+                <li class="breadcrumb-item active">Customer Report</li>
+            </ol>
+        </nav>
+        <h1><i class="bi bi-people me-2"></i>Customer Report</h1>
+    </div>
+    <a href="{% url 'customer_add' %}" class="btn btn-primary">
+        <i class="bi bi-plus-lg me-1"></i>Add Customer
+    </a>
+</div>
+
+<!-- Summary Stats -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="stat-card">
+            <div class="stat-icon primary">
+                <i class="bi bi-people"></i>
+            </div>
+            <div class="stat-value">{{ total_customers }}</div>
+            <div class="stat-label">Total Customers</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card">
+            <div class="stat-icon success">
+                <i class="bi bi-person-check"></i>
+            </div>
+            <div class="stat-value">{{ active_customers }}</div>
+            <div class="stat-label">Active Customers</div>
+            <small class="text-muted">(with at least 1 order)</small>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card">
+            <div class="stat-icon warning">
+                <i class="bi bi-person-x"></i>
+            </div>
+            <div class="stat-value">{{ customers_with_pending.count }}</div>
+            <div class="stat-label">Pending Payments</div>
+        </div>
+    </div>
+</div>
+
+<!-- Top Customers -->
+<div class="card mb-4">
+    <div class="card-header">
+        <i class="bi bi-trophy me-2"></i>Top Customers by Business
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table mb-0">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Customer</th>
+                        <th>Phone</th>
+                        <th>Total Orders</th>
+                        <th>Total Business</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for customer in top_customers %}
+                    <tr>
+                        <td>
+                            {% if forloop.counter <= 3 %}
+                            <span class="badge bg-{{ forloop.counter|yesno:'warning,secondary,info' }}">{{ forloop.counter }}</span>
+                            {% else %}
+                            {{ forloop.counter }}
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{% url 'customer_detail' customer.pk %}">{{ customer.name }}</a>
+                        </td>
+                        <td>{{ customer.phone }}</td>
+                        <td>{{ customer.total_orders }}</td>
+                        <td class="text-success fw-bold">₹{{ customer.total_business|floatformat:0|intcomma }}</td>
+                        <td>
+                            <a href="{% url 'customer_detail' customer.pk %}" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center py-4 text-muted">No customer data available</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Customers with Pending Payments -->
+<div class="card">
+    <div class="card-header bg-warning-subtle">
+        <i class="bi bi-exclamation-triangle me-2"></i>Customers with Pending Payments
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table mb-0">
+                <thead>
+                    <tr>
+                        <th>Customer</th>
+                        <th>Phone</th>
+                        <th>Pending Amount</th>
+                        <th>Last Order</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for customer in customers_with_pending %}
+                    <tr>
+                        <td>
+                            <a href="{% url 'customer_detail' customer.pk %}">{{ customer.name }}</a>
+                        </td>
+                        <td>
+                            <a href="tel:{{ customer.phone }}">{{ customer.phone }}</a>
+                        </td>
+                        <td class="text-danger fw-bold">₹{{ customer.pending_amount|floatformat:0|intcomma }}</td>
+                        <td>{{ customer.order_set.last.created_at|date:"d M Y"|default:"N/A" }}</td>
+                        <td>
+                            <a href="{% url 'customer_detail' customer.pk %}" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-eye"></i> View
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center py-4">
+                            <i class="bi bi-check-circle text-success display-6"></i>
+                            <p class="text-muted mt-2 mb-0">No pending payments! All customers are up to date.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

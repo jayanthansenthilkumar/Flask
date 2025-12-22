@@ -1,0 +1,219 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}{{ order.order_number }} - TailorShop{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-1">
+                <li class="breadcrumb-item"><a href="{% url 'order_list' %}">Orders</a></li>
+                <li class="breadcrumb-item active">{{ order.order_number }}</li>
+            </ol>
+        </nav>
+        <h1>
+            <i class="bi bi-bag me-2"></i>{{ order.order_number }}
+            <span class="badge badge-{{ order.status|lower }} ms-2">{{ order.get_status_display }}</span>
+        </h1>
+    </div>
+    <div class="btn-group">
+        {% if not has_invoice %}
+        <a href="{% url 'invoice_create' order.pk %}" class="btn btn-success">
+            <i class="bi bi-receipt me-2"></i>Create Invoice
+        </a>
+        {% else %}
+        <a href="{% url 'invoice_detail' invoice.pk %}" class="btn btn-outline-success">
+            <i class="bi bi-receipt me-2"></i>View Invoice
+        </a>
+        {% endif %}
+        <a href="{% url 'order_edit' order.pk %}" class="btn btn-outline-secondary">
+            <i class="bi bi-pencil me-2"></i>Edit
+        </a>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Order Details -->
+    <div class="col-lg-8">
+        <!-- Status Update -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="bi bi-arrow-repeat me-2"></i>Update Status
+            </div>
+            <div class="card-body">
+                <form method="post" action="{% url 'order_status_update' order.pk %}" class="d-flex gap-2 flex-wrap">
+                    {% csrf_token %}
+                    <button type="submit" name="status" value="PENDING" class="btn {% if order.status == 'PENDING' %}btn-warning{% else %}btn-outline-warning{% endif %}">
+                        <i class="bi bi-hourglass me-1"></i>Pending
+                    </button>
+                    <button type="submit" name="status" value="IN_PROGRESS" class="btn {% if order.status == 'IN_PROGRESS' %}btn-info{% else %}btn-outline-info{% endif %}">
+                        <i class="bi bi-gear me-1"></i>In Progress
+                    </button>
+                    <button type="submit" name="status" value="READY" class="btn {% if order.status == 'READY' %}btn-success{% else %}btn-outline-success{% endif %}">
+                        <i class="bi bi-check-circle me-1"></i>Ready
+                    </button>
+                    <button type="submit" name="status" value="DELIVERED" class="btn {% if order.status == 'DELIVERED' %}btn-secondary{% else %}btn-outline-secondary{% endif %}">
+                        <i class="bi bi-box-seam me-1"></i>Delivered
+                    </button>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Order Items -->
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-list-check me-2"></i>Order Items
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table mb-0">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Garment</th>
+                                <th>Stitching</th>
+                                <th>Qty</th>
+                                <th>Price</th>
+                                <th>Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in items %}
+                            <tr>
+                                <td>{{ forloop.counter }}</td>
+                                <td>
+                                    <strong>{{ item.garment_type.name }}</strong>
+                                    {% if item.notes %}
+                                    <br><small class="text-muted">{{ item.notes }}</small>
+                                    {% endif %}
+                                </td>
+                                <td>{{ item.stitching_type.name }}</td>
+                                <td>{{ item.quantity }}</td>
+                                <td>₹{{ item.price|floatformat:0 }}</td>
+                                <td class="fw-bold">₹{{ item.total_price|floatformat:0 }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot>
+                            <tr class="table-light">
+                                <td colspan="5" class="text-end fw-bold">Total:</td>
+                                <td class="fw-bold text-primary">₹{{ order.total_amount|floatformat:0|intcomma }}</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Sidebar Info -->
+    <div class="col-lg-4">
+        <!-- Customer Info -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="bi bi-person me-2"></i>Customer
+            </div>
+            <div class="card-body">
+                <h5 class="mb-1">
+                    <a href="{% url 'customer_detail' order.customer.pk %}" class="text-decoration-none">
+                        {{ order.customer.name }}
+                    </a>
+                </h5>
+                <p class="text-muted mb-2">
+                    <a href="tel:{{ order.customer.phone }}" class="text-decoration-none">
+                        <i class="bi bi-telephone me-1"></i>{{ order.customer.phone }}
+                    </a>
+                </p>
+                {% if order.customer.address %}
+                <p class="small text-muted mb-0">
+                    <i class="bi bi-geo-alt me-1"></i>{{ order.customer.address }}
+                </p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Order Info -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="bi bi-info-circle me-2"></i>Order Details
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <small class="text-muted">Order Date</small>
+                    <div class="fw-500">{{ order.order_date|date:"d M Y" }}</div>
+                </div>
+                <div class="mb-3">
+                    <small class="text-muted">Delivery Date</small>
+                    <div class="fw-500 {% if order.is_overdue %}text-danger{% endif %}">
+                        {% if order.delivery_date %}
+                        {{ order.delivery_date|date:"d M Y" }}
+                        {% if order.is_overdue %}<i class="bi bi-exclamation-circle ms-1"></i>Overdue{% endif %}
+                        {% else %}
+                        <span class="text-muted">Not set</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <small class="text-muted">Priority</small>
+                    <div>
+                        {% if order.priority == 'URGENT' %}
+                        <span class="badge bg-danger">Urgent</span>
+                        {% elif order.priority == 'EXPRESS' %}
+                        <span class="badge bg-warning">Express</span>
+                        {% else %}
+                        <span class="badge bg-secondary">Normal</span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% if order.notes %}
+                <div>
+                    <small class="text-muted">Notes</small>
+                    <div>{{ order.notes }}</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Invoice Info -->
+        {% if has_invoice %}
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-receipt me-2"></i>Invoice
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Invoice #:</span>
+                    <strong>{{ invoice.invoice_number }}</strong>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Total:</span>
+                    <strong>₹{{ invoice.total|floatformat:0|intcomma }}</strong>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Paid:</span>
+                    <span class="text-success">₹{{ invoice.paid_amount|floatformat:0|intcomma }}</span>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <span>Balance:</span>
+                    <span class="{% if invoice.balance_amount > 0 %}text-danger{% else %}text-success{% endif %} fw-bold">
+                        ₹{{ invoice.balance_amount|floatformat:0|intcomma }}
+                    </span>
+                </div>
+                <hr>
+                <div class="d-flex gap-2">
+                    <a href="{% url 'invoice_detail' invoice.pk %}" class="btn btn-sm btn-outline-primary flex-fill">
+                        <i class="bi bi-eye me-1"></i>View
+                    </a>
+                    {% if invoice.balance_amount > 0 %}
+                    <a href="{% url 'payment_add' invoice.pk %}" class="btn btn-sm btn-success flex-fill">
+                        <i class="bi bi-cash me-1"></i>Pay
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

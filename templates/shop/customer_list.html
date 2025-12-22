@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+
+{% block title %}Customers - TailorShop{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1><i class="bi bi-people me-2"></i>Customers</h1>
+    <div class="btn-group">
+        <a href="{% url 'customer_add' %}" class="btn btn-primary">
+            <i class="bi bi-plus-lg me-2"></i>Add Customer
+        </a>
+    </div>
+</div>
+
+<!-- Search -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-8">
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                    <input type="text" name="q" class="form-control" placeholder="Search by name, phone or email..." value="{{ query }}">
+                </div>
+            </div>
+            <div class="col-md-4">
+                <button type="submit" class="btn btn-primary w-100">Search</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Customer List -->
+<div class="table-container">
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Customer</th>
+                <th>Phone</th>
+                <th>Email</th>
+                <th>Orders</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for customer in customers %}
+            <tr>
+                <td>
+                    <a href="{% url 'customer_detail' customer.pk %}" class="fw-600 text-dark text-decoration-none">
+                        {{ customer.name }}
+                    </a>
+                    {% if customer.address %}
+                    <br><small class="text-muted">{{ customer.address|truncatewords:10 }}</small>
+                    {% endif %}
+                </td>
+                <td>
+                    <a href="tel:{{ customer.phone }}" class="text-decoration-none">
+                        <i class="bi bi-telephone me-1"></i>{{ customer.phone }}
+                    </a>
+                </td>
+                <td>
+                    {% if customer.email %}
+                    <a href="mailto:{{ customer.email }}">{{ customer.email }}</a>
+                    {% else %}
+                    <span class="text-muted">-</span>
+                    {% endif %}
+                </td>
+                <td>{{ customer.total_orders }}</td>
+                <td>
+                    <a href="{% url 'customer_detail' customer.pk %}" class="btn btn-sm btn-outline-primary" title="View">
+                        <i class="bi bi-eye"></i>
+                    </a>
+                    <a href="{% url 'customer_edit' customer.pk %}" class="btn btn-sm btn-outline-secondary" title="Edit">
+                        <i class="bi bi-pencil"></i>
+                    </a>
+                    <a href="{% url 'measurement_add' customer.pk %}" class="btn btn-sm btn-outline-success" title="Measurements">
+                        <i class="bi bi-rulers"></i>
+                    </a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5" class="text-center py-5">
+                    <i class="bi bi-people display-4 text-muted"></i>
+                    <p class="text-muted mt-2">No customers found</p>
+                    <a href="{% url 'customer_add' %}" class="btn btn-primary">Add First Customer</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Pagination -->
+{% if customers.has_other_pages %}
+<nav class="mt-4">
+    <ul class="pagination justify-content-center">
+        {% if customers.has_previous %}
+        <li class="page-item">
+            <a class="page-link" href="?page={{ customers.previous_page_number }}{% if query %}&q={{ query }}{% endif %}">Previous</a>
+        </li>
+        {% endif %}
+        
+        {% for num in customers.paginator.page_range %}
+        {% if customers.number == num %}
+        <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+        {% elif num > customers.number|add:'-3' and num < customers.number|add:'3' %}
+        <li class="page-item"><a class="page-link" href="?page={{ num }}{% if query %}&q={{ query }}{% endif %}">{{ num }}</a></li>
+        {% endif %}
+        {% endfor %}
+        
+        {% if customers.has_next %}
+        <li class="page-item">
+            <a class="page-link" href="?page={{ customers.next_page_number }}{% if query %}&q={{ query }}{% endif %}">Next</a>
+        </li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+{% endblock %}
