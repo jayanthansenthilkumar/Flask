@@ -15,7 +15,7 @@ SECRET_KEY = 'django-insecure-your-secret-key-change-in-production-abc123xyz789'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'testserver']
 
 # Application definition
 INSTALLED_APPS = [
@@ -61,7 +61,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'tailor_shop.wsgi.application'
 
-# Database - Using SQLite for easy setup, can switch to PostgreSQL
+# Database Configuration
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
@@ -69,8 +69,26 @@ DATABASES = {
     }
 }
 
-# For PostgreSQL, uncomment below and configure:
+# MySQL Configuration (available when MariaDB 10.6+ or MySQL 5.7+ installed)
+# Current system has MariaDB 10.4.32 which is not supported by Django 6.0
+# To use MySQL with database name 'srijai', uncomment below after upgrading:
 # DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.mysql',
+#         'NAME': 'srijai',
+#         'USER': 'root',
+#         'PASSWORD': '',  # Set your MySQL password here
+#         'HOST': 'localhost',
+#         'PORT': '3306',
+#         'OPTIONS': {
+#             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+#             'charset': 'utf8mb4',
+#         }
+#     }
+# }
+
+# For PostgreSQL, uncomment below and configure:
+# # DATABASES = {
 #     'default': {
 #         'ENGINE': 'django.db.backends.postgresql',
 #         'NAME': 'tailor_shop',

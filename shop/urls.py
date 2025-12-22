@@ -67,4 +67,6 @@ urlpatterns = [
     path('api/customer/<int:pk>/', views.api_customer_detail, name='api_customer_detail'),
     path('api/calculate-price/', views.api_calculate_price, name='api_calculate_price'),
     path('api/dashboard-stats/', views.api_dashboard_stats, name='api_dashboard_stats'),
+    path('api/customer-search/', views.customer_search, name='api_customer_search'),
+    path('api/get-price/', views.api_calculate_price, name='api_get_price'),
 ]

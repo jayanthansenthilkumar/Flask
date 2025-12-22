@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
+{% load static %}
 
-{% block title %}Quick Billing - TailorShop{% endblock %}
+{% block title %}Quick Billing - SriJai Tailoring{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -139,55 +140,50 @@
 </div>
 
 <div class="billing-container">
-    <!-- Left Panel - Customer & Items -->
-    <div class="billing-left">
-        <!-- Customer Search -->
-        <div class="card">
-            <div class="card-header">
-                <i class="bi bi-person me-2"></i>Customer
-            </div>
+    <!-- Left Panel - Items & Customer -->
+    <div class="billing-left-panel">
+        <!-- Customer Selection -->
+        <div class="card mb-3">
             <div class="card-body">
-                <div class="position-relative">
-                    <div class="input-group input-group-lg">
-                        <span class="input-group-text"><i class="bi bi-search"></i></span>
-                        <input type="text" id="customerSearch" class="form-control" 
-                               placeholder="Search by name or phone..." autocomplete="off">
+                <div class="mb-3 position-relative">
+                    <label for="customerSearch" class="form-label">Select Customer</label>
+                    <div class="d-flex gap-2">
+                        <div class="flex-grow-1 position-relative">
+                            <input type="text" id="customerSearch" class="form-control" 
+                                   placeholder="Search customer by name or phone...">
+                            <div class="customer-search-results" id="customerSearchResults"></div>
+                        </div>
                         <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#newCustomerModal">
-                            <i class="bi bi-plus-lg"></i>
+                            <i class="bi bi-plus-lg"></i> New
                         </button>
                     </div>
-                    <div class="customer-search-results" id="searchResults"></div>
                 </div>
                 
-                <!-- Selected Customer Info -->
-                <div id="selectedCustomer" class="mt-3" style="display: none;">
+                <div id="selectedCustomerInfo" class="d-none">
                     <div class="d-flex justify-content-between align-items-start p-3 bg-light-primary rounded">
                         <div>
-                            <h5 class="mb-1" id="customerName">-</h5>
-                            <p class="mb-0 text-muted"><i class="bi bi-telephone me-1"></i><span id="customerPhone">-</span></p>
+                            <h6 class="mb-1" id="selectedCustomerName"></h6>
+                            <p class="mb-0 text-muted small" id="selectedCustomerDetails"></p>
                         </div>
-                        <button type="button" class="btn btn-sm btn-outline-danger" onclick="clearCustomer()">
-                            <i class="bi bi-x"></i>
+                        <button type="button" class="btn btn-sm btn-outline-primary" id="changeCustomerBtn">
+                            Change
                         </button>
                     </div>
-                    <input type="hidden" id="customerId" value="">
                 </div>
             </div>
         </div>
-        
-        <!-- Quick Add Garments -->
-        <div class="card">
+
+        <!-- Garment Selection -->
+        <div class="card mb-3">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <span><i class="bi bi-grid me-2"></i>Quick Add</span>
-                <small class="text-muted">Click to add items</small>
+                <h6 class="mb-0">Select Garment</h6>
+                <small class="text-muted">Quick selection</small>
             </div>
             <div class="card-body">
-                <div class="quick-garment-btns" id="quickGarments">
+                <div class="quick-garment-btns">
                     {% for gt in garment_types %}
-                    <button type="button" class="quick-garment-btn" 
-                            data-id="{{ gt.pk }}" 
-                            data-name="{{ gt.name }}" 
-                            data-price="{{ gt.base_price }}">
+                    <button type="button" class="quick-garment-btn" data-garment-id="{{ gt.id }}" 
+                            data-garment-name="{{ gt.name }}" data-base-price="{{ gt.base_price }}">
                         {{ gt.name }}
                         <small class="d-block text-muted">₹{{ gt.base_price }}</small>
                     </button>
@@ -195,139 +191,120 @@
                 </div>
             </div>
         </div>
-        
-        <!-- Order Items -->
-        <div class="card flex-grow-1">
+
+        <!-- Stitching Type Selection -->
+        <div class="card mb-3">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <span><i class="bi bi-cart me-2"></i>Order Items</span>
-                <span class="badge bg-primary" id="itemCountBadge">0</span>
+                <h6 class="mb-0">Stitching Type</h6>
             </div>
-            <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+            <div class="card-body">
+                <select id="stitchingType" class="form-select">
+                    <option value="">Select stitching type...</option>
+                    {% for st in stitching_types %}
+                    <option value="{{ st.id }}" data-price-multiplier="{{ st.price_multiplier }}">
+                        {{ st.name }} ({{ st.price_multiplier }}x price)
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <!-- Current Bill Items -->
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="mb-0">Bill Items</h6>
+                <span class="badge bg-primary" id="billItemCount">0</span>
+            </div>
+            <div class="card-body">
                 <div id="billItems">
-                    <!-- Items will be added here -->
-                </div>
-                
-                <div id="noItems" class="text-center py-4 text-muted">
-                    <i class="bi bi-cart3 display-4"></i>
-                    <p class="mt-2">No items added yet</p>
-                    <small>Click garments above to add</small>
+                    <div class="text-center text-muted py-4">
+                        <i class="bi bi-cart display-4 text-muted"></i>
+                        <p class="mt-2">No items added yet</p>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-    
-    <!-- Right Panel - Bill Summary -->
-    <div class="billing-right">
-        <div class="card-header">
-            <i class="bi bi-receipt me-2"></i>Bill Summary
+
+    <!-- Right Panel - Summary & Payment -->
+    <div class="billing-right-panel">
+        <!-- Bill Summary -->
+        <div class="card mb-3">
+            <div class="card-body">
+                <div class="bill-total-section">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Subtotal:</span>
+                        <span id="billSubtotal">₹0.00</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Tax (GST):</span>
+                        <span id="billTax">₹0.00</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Discount:</span>
+                        <span id="billDiscount">₹0.00</span>
+                    </div>
+                    <hr>
+                    <div class="d-flex justify-content-between">
+                        <span class="total-amount">Total:</span>
+                        <span class="total-amount" id="billTotal">₹0.00</span>
+                    </div>
+                </div>
+            </div>
         </div>
-        
-        <div class="card-body flex-grow-1 d-flex flex-column">
-            <!-- Total Section -->
-            <div class="bill-total-section">
-                <small class="opacity-75">Total Amount</small>
-                <div class="total-amount">₹<span id="grandTotal">0.00</span></div>
-            </div>
-            
-            <!-- Calculation Breakdown -->
-            <div class="mb-4">
-                <div class="d-flex justify-content-between mb-2">
-                    <span class="text-muted">Subtotal</span>
-                    <span>₹<span id="subtotal">0.00</span></span>
-                </div>
-                <div class="d-flex justify-content-between mb-2">
-                    <span class="text-muted">Discount</span>
-                    <div class="d-flex align-items-center gap-2">
-                        <input type="number" id="discountInput" class="form-control form-control-sm" 
-                               style="width: 80px;" value="0" min="0">
-                        <span class="text-danger">-₹<span id="discountAmount">0.00</span></span>
+
+        <!-- Payment & Delivery -->
+        <div class="card mb-3">
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label">Payment Mode</label>
+                    <div class="payment-mode-btns">
+                        <div class="payment-mode-btn active" data-mode="CASH">
+                            <i class="bi bi-cash"></i><br>Cash
+                        </div>
+                        <div class="payment-mode-btn" data-mode="CARD">
+                            <i class="bi bi-credit-card"></i><br>Card
+                        </div>
+                        <div class="payment-mode-btn" data-mode="UPI">
+                            <i class="bi bi-phone"></i><br>UPI
+                        </div>
                     </div>
                 </div>
-                <div class="d-flex justify-content-between mb-2">
-                    <span class="text-muted">Tax (GST)</span>
-                    <div class="d-flex align-items-center gap-2">
-                        <select id="taxRate" class="form-select form-select-sm" style="width: 80px;">
-                            <option value="0">0%</option>
-                            <option value="5">5%</option>
-                            <option value="12">12%</option>
-                            <option value="18">18%</option>
-                        </select>
-                        <span>+₹<span id="taxAmount">0.00</span></span>
+
+                <div class="row">
+                    <div class="col-6">
+                        <label class="form-label">Advance Paid</label>
+                        <input type="number" id="advancePaid" class="form-control" 
+                               placeholder="0.00" min="0" step="0.01">
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label">Discount %</label>
+                        <input type="number" id="discountPercent" class="form-control" 
+                               placeholder="0" min="0" max="100" step="1">
                     </div>
                 </div>
-            </div>
-            
-            <hr>
-            
-            <!-- Delivery Date -->
-            <div class="mb-3">
-                <label class="form-label"><i class="bi bi-calendar me-1"></i>Delivery Date</label>
-                <input type="date" id="deliveryDate" class="form-control">
-            </div>
-            
-            <!-- Priority -->
-            <div class="mb-3">
-                <label class="form-label"><i class="bi bi-flag me-1"></i>Priority</label>
-                <div class="btn-group w-100" role="group">
-                    <input type="radio" class="btn-check" name="priority" id="priorityNormal" value="NORMAL" checked>
-                    <label class="btn btn-outline-secondary" for="priorityNormal">Normal</label>
-                    
-                    <input type="radio" class="btn-check" name="priority" id="priorityUrgent" value="URGENT">
-                    <label class="btn btn-outline-warning" for="priorityUrgent">Urgent</label>
-                    
-                    <input type="radio" class="btn-check" name="priority" id="priorityExpress" value="EXPRESS">
-                    <label class="btn btn-outline-danger" for="priorityExpress">Express</label>
+
+                <div class="mt-3">
+                    <label class="form-label">Delivery Date</label>
+                    <input type="date" id="deliveryDate" class="form-control" required>
+                </div>
+
+                <div class="mt-3">
+                    <label class="form-label">Special Instructions</label>
+                    <textarea id="specialInstructions" class="form-control" rows="2" 
+                              placeholder="Any special requirements..."></textarea>
                 </div>
             </div>
-            
-            <hr>
-            
-            <!-- Advance Payment -->
-            <div class="mb-3">
-                <label class="form-label"><i class="bi bi-cash me-1"></i>Advance Payment</label>
-                <input type="number" id="advancePayment" class="form-control" value="0" min="0">
-            </div>
-            
-            <!-- Payment Mode -->
-            <div class="mb-4">
-                <label class="form-label">Payment Mode</label>
-                <div class="payment-mode-btns">
-                    <button type="button" class="payment-mode-btn active" data-mode="CASH">
-                        <i class="bi bi-cash-coin"></i><br>Cash
-                    </button>
-                    <button type="button" class="payment-mode-btn" data-mode="UPI">
-                        <i class="bi bi-phone"></i><br>UPI
-                    </button>
-                    <button type="button" class="payment-mode-btn" data-mode="CARD">
-                        <i class="bi bi-credit-card"></i><br>Card
-                    </button>
-                </div>
-                <input type="hidden" id="paymentMode" value="CASH">
-            </div>
-            
-            <!-- Balance -->
-            <div class="alert alert-info mb-4">
-                <div class="d-flex justify-content-between align-items-center">
-                    <span><i class="bi bi-wallet2 me-2"></i>Balance Due</span>
-                    <strong class="fs-5">₹<span id="balanceDue">0.00</span></strong>
-                </div>
-            </div>
-            
-            <!-- Notes -->
-            <div class="mb-4">
-                <label class="form-label">Notes</label>
-                <textarea id="orderNotes" class="form-control" rows="2" placeholder="Any special instructions..."></textarea>
-            </div>
-            
-            <div class="mt-auto">
-                <!-- Action Buttons -->
-                <button type="button" id="createBillBtn" class="btn btn-success btn-lg w-100 mb-2" disabled>
-                    <i class="bi bi-check-circle me-2"></i>Create Bill & Print
-                </button>
-                <button type="button" id="saveDraftBtn" class="btn btn-outline-secondary w-100">
-                    <i class="bi bi-save me-2"></i>Save as Draft
-                </button>
-            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="d-grid gap-2">
+            <button type="button" class="btn btn-primary btn-lg" id="createBillBtn">
+                <i class="bi bi-check-lg me-2"></i>Create Bill & Invoice
+            </button>
+            <button type="button" class="btn btn-outline-secondary" id="clearBillBtn">
+                <i class="bi bi-arrow-clockwise me-2"></i>Clear All
+            </button>
         </div>
     </div>
 </div>
@@ -337,16 +314,16 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title"><i class="bi bi-person-plus me-2"></i>New Customer</h5>
+                <h5 class="modal-title">Add New Customer</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
                 <div class="mb-3">
-                    <label class="form-label">Name <span class="text-danger">*</span></label>
+                    <label class="form-label">Full Name</label>
                     <input type="text" id="newCustomerName" class="form-control" required>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">Phone <span class="text-danger">*</span></label>
+                    <label class="form-label">Phone Number</label>
                     <input type="text" id="newCustomerPhone" class="form-control" required>
                 </div>
                 <div class="mb-3">

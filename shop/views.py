@@ -98,7 +98,7 @@ def dashboard(request):
     
     # Low stock items
     low_stock_items = Inventory.objects.filter(
-        quantity__lte=models.F('min_stock_level')
+        quantity__lte=F('min_stock_level')
     )[:5]
     
     context = {
@@ -723,7 +723,7 @@ def inventory_list(request):
     if query:
         items = items.filter(item_name__icontains=query)
     if show_low_stock:
-        items = items.filter(quantity__lte=models.F('min_stock_level'))
+        items = items.filter(quantity__lte=F('min_stock_level'))
     
     return render(request, 'shop/inventory_list.html', {
         'items': items,
