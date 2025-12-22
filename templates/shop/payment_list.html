@@ -66,6 +66,7 @@
                 <th>Mode</th>
                 <th>Reference</th>
                 <th>Amount</th>
+                <th>Actions</th>
             </tr>
         </thead>
         <tbody>
@@ -93,10 +94,18 @@
                 </td>
                 <td>{{ payment.reference_number|default:"-" }}</td>
                 <td class="fw-bold text-success">₹{{ payment.amount|floatformat:0|intcomma }}</td>
+                <td>
+                    <a href="{% url 'receipt_preview' payment.pk %}" class="btn btn-sm btn-outline-info" title="Preview Receipt" target="_blank">
+                        <i class="bi bi-eye"></i>
+                    </a>
+                    <a href="{% url 'print_receipt' payment.pk %}" class="btn btn-sm btn-outline-secondary" title="Download Receipt" target="_blank">
+                        <i class="bi bi-printer"></i>
+                    </a>
+                </td>
             </tr>
             {% empty %}
             <tr>
-                <td colspan="6" class="text-center py-5">
+                <td colspan="7" class="text-center py-5">
                     <i class="bi bi-cash-stack display-4 text-muted"></i>
                     <p class="text-muted mt-2">No payments found</p>
                 </td>

@@ -1,26 +1,29 @@
-# TailorShop Management System
+# 🏷️ SriJai Tailoring Management System
 
-A complete Django-based Tailoring Shop Management System with automated billing, customer management, order tracking, and comprehensive reporting.
+**Complete Professional Tailoring Shop Management System with Print-Ready Invoice & Receipt Generation**
 
-## Features
+## ✨ Features
 
-- 👤 **Customer Management** - Add, edit, and track customers with their measurements
-- 📏 **Measurement Profiles** - Store multiple measurement profiles per customer
-- 📋 **Order Management** - Create and track orders with multiple items
-- ⚡ **Quick Billing** - Fast billing interface with customer search and auto-calculation
-- 🧾 **Invoice Generation** - Automatic invoice creation with discounts support
-- 💰 **Payment Tracking** - Track payments with multiple payment modes (Cash, UPI, Card, Bank)
-- 📦 **Inventory Management** - Track materials and supplies with low-stock alerts
-- 📊 **Reports** - Sales reports, customer reports, and payment history
-- 🎨 **Attractive UI** - Modern, responsive interface with Bootstrap 5
+### 🎯 Core Functionality
+- **Customer Management**: Complete customer profiles with contact details
+- **Order Processing**: Full order lifecycle management with delivery tracking
+- **Garment Types**: Pre-configured with 10 common garment types (Shirt, Pant, Suit, etc.)
+- **Stitching Types**: 5 quality levels (Regular, Premium, Designer, Express, Economy)
+- **Quick Billing**: Fast invoice generation and payment processing
 
-## Tech Stack
+### 🖨️ Professional Printing System
+- **PDF Invoice Generation**: Professional invoices with company branding
+- **PDF Receipt Printing**: Payment receipts with detailed transaction info
+- **Print Preview**: Preview invoices and receipts before printing
+- **Download Options**: Direct PDF download for external printing
+- **Professional Layout**: Clean, business-ready formatting with colors and styling
 
-- **Backend**: Django 4.2+
-- **Frontend**: HTML5, CSS3, JavaScript
-- **UI Framework**: Bootstrap 5.3
-- **Icons**: Bootstrap Icons
-- **Database**: SQLite (easily switchable to PostgreSQL)
+### 💰 Financial Management
+- **Payment Tracking**: Multiple payment modes (Cash, UPI, Card, Online)
+- **Partial Payments**: Support for installment payments
+- **Payment Status**: Auto-calculated (Paid, Partial, Unpaid)
+- **Balance Management**: Real-time balance calculations
+- **Expense Tracking**: 7 expense categories for business management
 
 ## Installation
 

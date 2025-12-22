@@ -5,7 +5,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.db.models import Sum, Count, Q, F
 from django.core.paginator import Paginator
 from django.utils import timezone
@@ -18,6 +18,7 @@ from .models import (
     GarmentType, StitchingType, Order, OrderItem,
     Invoice, Payment, Inventory, Expense
 )
+from .print_utils import PrintManager
 from .forms import (
     CustomerForm, MeasurementProfileForm, MeasurementFormSet,
     OrderForm, OrderItemFormSet, InvoiceForm, PaymentForm,
@@ -957,3 +958,62 @@ def api_dashboard_stats(request):
     }
     
     return JsonResponse(data)
+
+
+# Print Views
+@login_required
+def print_invoice(request, invoice_id):
+    """Generate and download invoice PDF"""
+    try:
+        invoice = get_object_or_404(Invoice, id=invoice_id)
+        pdf_content = PrintManager.generate_invoice_pdf(invoice)
+        
+        response = HttpResponse(pdf_content, content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="Invoice_{invoice.invoice_number}.pdf"'
+        return response
+    except Exception as e:
+        messages.error(request, f"Error generating invoice PDF: {str(e)}")
+        return redirect('invoice_list')
+
+
+@login_required
+def print_receipt(request, payment_id):
+    """Generate and download receipt PDF"""
+    try:
+        payment = get_object_or_404(Payment, id=payment_id)
+        pdf_content = PrintManager.generate_receipt_pdf(payment)
+        
+        response = HttpResponse(pdf_content, content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="Receipt_{payment_id}.pdf"'
+        return response
+    except Exception as e:
+        messages.error(request, f"Error generating receipt PDF: {str(e)}")
+        return redirect('payment_list')
+
+
+@login_required
+def invoice_preview(request, invoice_id):
+    """Preview invoice before printing"""
+    invoice = get_object_or_404(Invoice, id=invoice_id)
+    try:
+        pdf_content = PrintManager.generate_invoice_pdf(invoice)
+        response = HttpResponse(pdf_content, content_type='application/pdf')
+        response['Content-Disposition'] = f'inline; filename="Invoice_{invoice.invoice_number}.pdf"'
+        return response
+    except Exception as e:
+        messages.error(request, f"Error previewing invoice: {str(e)}")
+        return redirect('invoice_detail', pk=invoice_id)
+
+
+@login_required
+def receipt_preview(request, payment_id):
+    """Preview receipt before printing"""
+    payment = get_object_or_404(Payment, id=payment_id)
+    try:
+        pdf_content = PrintManager.generate_receipt_pdf(payment)
+        response = HttpResponse(pdf_content, content_type='application/pdf')
+        response['Content-Disposition'] = f'inline; filename="Receipt_{payment_id}.pdf"'
+        return response
+    except Exception as e:
+        messages.error(request, f"Error previewing receipt: {str(e)}")
+        return redirect('payment_detail', pk=payment_id)

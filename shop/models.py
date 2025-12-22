@@ -269,6 +269,31 @@ class Invoice(models.Model):
         return f"{self.invoice_number} - ₹{self.total}"
 
     @property
+    def customer(self):
+        """Get customer from order"""
+        return self.order.customer
+
+    @property
+    def due_date(self):
+        """Get due date from order delivery date"""
+        return self.order.delivery_date
+
+    @property
+    def discount_amount(self):
+        """Calculate discount amount"""
+        return self.discount
+
+    @property
+    def tax_amount(self):
+        """Calculate tax amount"""
+        return self.tax
+
+    @property
+    def total_amount(self):
+        """Get total amount"""
+        return self.total
+
+    @property
     def paid_amount(self):
         return self.payments.aggregate(total=models.Sum('amount'))['total'] or Decimal('0.00')
 
@@ -302,6 +327,7 @@ class Payment(models.Model):
     ]
 
     invoice = models.ForeignKey(Invoice, on_delete=models.CASCADE, related_name='payments')
+    payment_number = models.CharField(max_length=30, unique=True, blank=True, null=True)
     payment_date = models.DateField(default=date.today)
     amount = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(Decimal('0.01'))])
     payment_mode = models.CharField(max_length=20, choices=PAYMENT_MODE_CHOICES, default='CASH')
@@ -309,6 +335,25 @@ class Payment(models.Model):
     notes = models.TextField(blank=True, null=True)
     received_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    def save(self, *args, **kwargs):
+        if not self.payment_number:
+            # Generate unique payment number: PAY-YYYYMMDD-XXXX
+            today = date.today()
+            prefix = f"PAY-{today.strftime('%Y%m%d')}"
+            last_payment = Payment.objects.filter(payment_number__startswith=prefix).order_by('-payment_number').first()
+            if last_payment:
+                last_num = int(last_payment.payment_number.split('-')[-1])
+                new_num = last_num + 1
+            else:
+                new_num = 1
+            self.payment_number = f"{prefix}-{new_num:04d}"
+        super().save(*args, **kwargs)
+
+    @property
+    def customer(self):
+        """Get customer from invoice"""
+        return self.invoice.customer
 
     def __str__(self):
         return f"₹{self.amount} - {self.payment_mode} ({self.payment_date})"

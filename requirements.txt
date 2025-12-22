@@ -1,7 +1,9 @@
-Django>=4.2,<5.0
+Django>=6.0,<7.0
 psycopg2-binary>=2.9.9
 mysqlclient>=2.2.0
 python-dotenv>=1.0.0
 Pillow>=10.0.0
 django-crispy-forms>=2.1
 crispy-bootstrap5>=2024.2
+reportlab>=4.0.0
+mysql-connector-python>=9.0.0

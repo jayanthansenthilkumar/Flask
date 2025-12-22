@@ -69,4 +69,10 @@ urlpatterns = [
     path('api/dashboard-stats/', views.api_dashboard_stats, name='api_dashboard_stats'),
     path('api/customer-search/', views.customer_search, name='api_customer_search'),
     path('api/get-price/', views.api_calculate_price, name='api_get_price'),
+    
+    # Print endpoints
+    path('print/invoice/<int:invoice_id>/', views.print_invoice, name='print_invoice'),
+    path('print/receipt/<int:payment_id>/', views.print_receipt, name='print_receipt'),
+    path('preview/invoice/<int:invoice_id>/', views.invoice_preview, name='invoice_preview'),
+    path('preview/receipt/<int:payment_id>/', views.receipt_preview, name='receipt_preview'),
 ]

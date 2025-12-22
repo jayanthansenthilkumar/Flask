@@ -76,7 +76,10 @@
                     <a href="{% url 'invoice_detail' invoice.pk %}" class="btn btn-sm btn-outline-primary" title="View">
                         <i class="bi bi-eye"></i>
                     </a>
-                    <a href="{% url 'invoice_print' invoice.pk %}" class="btn btn-sm btn-outline-secondary" title="Print" target="_blank">
+                    <a href="{% url 'invoice_preview' invoice.pk %}" class="btn btn-sm btn-outline-info" title="Preview" target="_blank">
+                        <i class="bi bi-eye-fill"></i>
+                    </a>
+                    <a href="{% url 'print_invoice' invoice.pk %}" class="btn btn-sm btn-outline-secondary" title="Download PDF" target="_blank">
                         <i class="bi bi-printer"></i>
                     </a>
                     {% if invoice.balance_amount > 0 %}

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """
-SQLite Setup Script for SriJai Tailoring Management System
-Perfect setup for immediate use with SQLite database
+SriJai Tailoring Management System - Complete Setup
+Clean setup for immediate use with all features
 """
 import os
 import django
@@ -10,7 +10,7 @@ from django.core.management import execute_from_command_line
 def main():
     """Main setup function."""
     print("\n" + "="*60)
-    print("🏷️ SriJai Tailoring - Complete Setup")
+    print("🏷️ SriJai Tailoring - Complete Setup & Cleanup")
     print("="*60 + "\n")
     
     # Set Django environment
@@ -44,6 +44,20 @@ def main():
             print("✓ Admin user created (admin/admin123)")
         else:
             print("✓ Admin user already exists")
+            
+        # Create a staff user for billing
+        if not User.objects.filter(username='staff').exists():
+            staff_user = User.objects.create_user(
+                username='staff',
+                email='staff@srijai.com',
+                password='staff123',
+                first_name='Staff',
+                last_name='User',
+                is_staff=True,
+            )
+            print("✓ Staff user created (staff/staff123)")
+        else:
+            print("✓ Staff user already exists")
     except Exception as e:
         print(f"❌ Error creating admin: {e}")
     
@@ -106,6 +120,14 @@ def main():
     except Exception as e:
         print(f"❌ Error loading initial data: {e}")
     
+    # Collect static files
+    print("📦 Collecting static files...")
+    try:
+        execute_from_command_line(['manage.py', 'collectstatic', '--noinput'])
+        print("✓ Static files collected")
+    except Exception as e:
+        print(f"⚠️ Static files warning: {e}")
+    
     print("\n" + "="*60)
     print("🎉 SriJai Tailoring Setup Complete!")
     print("="*60)
@@ -113,28 +135,30 @@ def main():
     print("\n✅ System Ready:")
     print("   📊 Database: SQLite (db.sqlite3)")
     print("   👤 Admin User: admin / admin123") 
+    print("   👤 Staff User: staff / staff123") 
     print("   🏷️ Shop Name: SriJai Tailoring")
     print("   📦 10 Garment Types loaded")
     print("   ✂️ 5 Stitching Types loaded")
     print("   💰 7 Expense Categories loaded")
+    print("   🖨️ PDF Receipt/Invoice Printing")
     
     print("\n🚀 Start Application:")
     print("   1. python manage.py runserver")
     print("   2. Open: http://127.0.0.1:8000/")
-    print("   3. Admin: http://127.0.0.1:8000/admin/")
+    print("   3. Login: http://127.0.0.1:8000/login/ (staff/staff123)")
+    print("   4. Admin: http://127.0.0.1:8000/admin/ (admin/admin123)")
+    print("   5. Billing: http://127.0.0.1:8000/billing/ (after login)")
     
-    print("\n💡 Features Available:")
-    print("   • Customer Management")
-    print("   • Order Processing") 
-    print("   • Quick Billing System")
-    print("   • Invoice Generation")
-    print("   • Payment Tracking")
-    print("   • Inventory Management")
-    print("   • Sales Reports")
-    print("   • Expense Tracking")
+    print("\n💡 New Features:")
+    print("   • PDF Invoice Generation")
+    print("   • PDF Receipt Printing") 
+    print("   • Invoice Preview & Download")
+    print("   • Payment Receipt Management")
+    print("   • Clean & Optimized Backend")
+    print("   • Automatic Number Generation")
     
-    print("\n📝 Note: MySQL available when MariaDB 10.6+ installed")
-    print("   Current: MariaDB 10.4.32 (not compatible with Django 6.0)")
+    print("\n📝 Note: For MySQL, upgrade to MariaDB 10.6+ first")
+    print("   Database name configured: 'srijai'")
     print()
 
 if __name__ == "__main__":

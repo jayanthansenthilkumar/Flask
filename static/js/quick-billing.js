@@ -133,23 +133,21 @@ function initCustomerSearch() {
     });
 }
 
-function selectCustomer(id, name, phone) {
-    selectedCustomer = { id, name, phone };
+function selectCustomer(id, name, phone, address) {
+    selectedCustomer = { id, name, phone, address };
     
-    document.getElementById('customerId').value = id;
-    document.getElementById('customerName').textContent = name;
-    document.getElementById('customerPhone').textContent = phone;
-    document.getElementById('selectedCustomer').style.display = 'block';
+    document.getElementById('selectedCustomerName').textContent = name;
+    document.getElementById('selectedCustomerDetails').textContent = `${phone}${address ? ' • ' + address : ''}`;
+    document.getElementById('selectedCustomerInfo').classList.remove('d-none');
     document.getElementById('customerSearch').value = '';
-    document.getElementById('searchResults').classList.remove('show');
+    document.getElementById('customerSearchResults').classList.remove('show');
     
     updateCreateButton();
 }
 
 function clearCustomer() {
     selectedCustomer = null;
-    document.getElementById('customerId').value = '';
-    document.getElementById('selectedCustomer').style.display = 'none';
+    document.getElementById('selectedCustomerInfo').classList.add('d-none');
     document.getElementById('customerSearch').value = '';
     updateCreateButton();
 }
@@ -209,17 +207,19 @@ function updateBillItem(itemId, field, value) {
 
 function renderBillItems() {
     const container = document.getElementById('billItems');
-    const noItems = document.getElementById('noItems');
-    const itemCountBadge = document.getElementById('itemCountBadge');
+    const itemCountBadge = document.getElementById('billItemCount');
     
     if (billItems.length === 0) {
-        container.innerHTML = '';
-        noItems.style.display = 'block';
+        container.innerHTML = `
+            <div class="text-center text-muted py-4">
+                <i class="bi bi-cart display-4 text-muted"></i>
+                <p class="mt-2">No items added yet</p>
+            </div>
+        `;
         itemCountBadge.textContent = '0';
         return;
     }
     
-    noItems.style.display = 'none';
     itemCountBadge.textContent = billItems.length;
     
     container.innerHTML = billItems.map(item => `
@@ -256,36 +256,34 @@ function renderBillItems() {
 // ========================================
 
 function initBillCalculations() {
-    document.getElementById('discountInput').addEventListener('input', calculateTotals);
-    document.getElementById('taxRate').addEventListener('change', calculateTotals);
-    document.getElementById('advancePayment').addEventListener('input', calculateTotals);
+    document.getElementById('discountPercent').addEventListener('input', calculateTotals);
+    document.getElementById('advancePaid').addEventListener('input', calculateTotals);
 }
 
 function calculateTotals() {
     // Subtotal
     const subtotal = billItems.reduce((sum, item) => sum + (item.quantity * item.price), 0);
     
-    // Discount
-    const discount = parseFloat(document.getElementById('discountInput').value) || 0;
-    const afterDiscount = Math.max(0, subtotal - discount);
+    // Discount (percentage)
+    const discountPercent = parseFloat(document.getElementById('discountPercent').value) || 0;
+    const discountAmount = (subtotal * discountPercent) / 100;
+    const afterDiscount = Math.max(0, subtotal - discountAmount);
     
-    // Tax
-    const taxRate = parseFloat(document.getElementById('taxRate').value) || 0;
-    const tax = (afterDiscount * taxRate) / 100;
+    // Tax (0% for now, can be made configurable)
+    const tax = 0;
     
     // Grand Total
     const grandTotal = afterDiscount + tax;
     
     // Advance Payment
-    const advance = parseFloat(document.getElementById('advancePayment').value) || 0;
+    const advance = parseFloat(document.getElementById('advancePaid').value) || 0;
     const balance = Math.max(0, grandTotal - advance);
     
     // Update displays
-    document.getElementById('subtotal').textContent = subtotal.toFixed(2);
-    document.getElementById('discountAmount').textContent = discount.toFixed(2);
-    document.getElementById('taxAmount').textContent = tax.toFixed(2);
-    document.getElementById('grandTotal').textContent = grandTotal.toFixed(2);
-    document.getElementById('balanceDue').textContent = balance.toFixed(2);
+    document.getElementById('billSubtotal').textContent = `₹${subtotal.toFixed(2)}`;
+    document.getElementById('billDiscount').textContent = `₹${discountAmount.toFixed(2)}`;
+    document.getElementById('billTax').textContent = `₹${tax.toFixed(2)}`;
+    document.getElementById('billTotal').textContent = `₹${grandTotal.toFixed(2)}`;
 }
 
 // ========================================
@@ -308,6 +306,7 @@ function initPaymentModes() {
 
 function initCreateBill() {
     document.getElementById('createBillBtn').addEventListener('click', createBill);
+    document.getElementById('clearBillBtn').addEventListener('click', clearBill);
 }
 
 function updateCreateButton() {
@@ -327,10 +326,10 @@ async function createBill() {
     
     try {
         const subtotal = billItems.reduce((sum, item) => sum + (item.quantity * item.price), 0);
-        const discount = parseFloat(document.getElementById('discountInput').value) || 0;
-        const taxRate = parseFloat(document.getElementById('taxRate').value) || 0;
-        const afterDiscount = Math.max(0, subtotal - discount);
-        const tax = (afterDiscount * taxRate) / 100;
+        const discountPercent = parseFloat(document.getElementById('discountPercent').value) || 0;
+        const discountAmount = (subtotal * discountPercent) / 100;
+        const afterDiscount = Math.max(0, subtotal - discountAmount);
+        const tax = 0; // No tax for now
         const total = afterDiscount + tax;
         
         const data = {
@@ -339,21 +338,21 @@ async function createBill() {
             customer_phone: selectedCustomer.phone,
             customer_address: selectedCustomer.address || '',
             delivery_date: document.getElementById('deliveryDate').value,
-            priority: document.querySelector('input[name="priority"]:checked').value,
+            priority: 'NORMAL', // Default priority
             items: billItems.map(item => ({
                 garment_type: item.garmentId,
-                stitching_type: 1, // Default, should be dynamic
+                stitching_type: item.stitchingId || 1, // Default stitching type
                 quantity: item.quantity,
                 price: item.price,
                 notes: ''
             })),
             subtotal: subtotal,
-            discount: discount,
+            discount: discountAmount,
             tax: tax,
             total: total,
-            advance: parseFloat(document.getElementById('advancePayment').value) || 0,
-            payment_mode: document.getElementById('paymentMode').value,
-            notes: document.getElementById('orderNotes').value
+            advance: parseFloat(document.getElementById('advancePaid').value) || 0,
+            payment_mode: document.querySelector('.payment-mode-btn.active')?.dataset.mode || 'CASH',
+            notes: document.getElementById('specialInstructions').value
         };
         
         const response = await fetch('/billing/create/', {
@@ -368,13 +367,11 @@ async function createBill() {
         const result = await response.json();
         
         if (result.success) {
-            // Show success modal
-            document.getElementById('createdOrderNumber').textContent = result.order_number;
-            document.getElementById('createdInvoiceNumber').textContent = result.invoice_number;
-            document.getElementById('viewOrderBtn').href = `/orders/${result.order_id}/`;
-            document.getElementById('printInvoiceBtn').href = `/invoices/${result.invoice_id}/print/`;
+            // Show success message and redirect
+            alert(`Bill created successfully!\nOrder: ${result.order_number}\nInvoice: ${result.invoice_number}`);
             
-            new bootstrap.Modal(document.getElementById('successModal')).show();
+            // Clear the form
+            clearBill();
         } else {
             alert('Error: ' + result.error);
         }
@@ -382,7 +379,7 @@ async function createBill() {
         alert('Error creating bill: ' + error.message);
     } finally {
         btn.disabled = false;
-        btn.innerHTML = '<i class="bi bi-check-circle me-2"></i>Create Bill & Print';
+        btn.innerHTML = '<i class="bi bi-check-lg me-2"></i>Create Bill & Invoice';
         updateCreateButton();
     }
 }
@@ -392,4 +389,41 @@ function getCSRFToken() {
         .split('; ')
         .find(row => row.startsWith('csrftoken='));
     return cookie ? cookie.split('=')[1] : '';
+}
+
+// Clear bill function
+function clearBill() {
+    billItems = [];
+    selectedCustomer = null;
+    
+    // Clear customer selection
+    document.getElementById('selectedCustomerInfo').classList.add('d-none');
+    document.getElementById('customerSearch').value = '';
+    
+    // Clear inputs
+    document.getElementById('discountPercent').value = '';
+    document.getElementById('advancePaid').value = '';
+    document.getElementById('specialInstructions').value = '';
+    
+    // Reset payment mode to cash
+    document.querySelectorAll('.payment-mode-btn').forEach(b => b.classList.remove('active'));
+    document.querySelector('.payment-mode-btn[data-mode="CASH"]').classList.add('active');
+    
+    // Re-render
+    renderBillItems();
+    calculateTotals();
+    updateCreateButton();
+}
+
+// Debounce function for search
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
 }
