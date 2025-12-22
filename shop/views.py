@@ -197,12 +197,26 @@ def customer_edit(request, pk):
 @login_required
 def customer_delete(request, pk):
     customer = get_object_or_404(Customer, pk=pk)
+    
+    # Check for related records
+    related_orders = customer.orders.count()
+    
     if request.method == 'POST':
+        if related_orders > 0:
+            messages.error(request, f'Cannot delete customer "{customer.name}". They have {related_orders} order(s) associated.')
+            return redirect('customer_detail', pk=pk)
+        
         name = customer.name
         customer.delete()
-        messages.success(request, f'Customer "{name}" deleted.')
+        messages.success(request, f'Customer "{name}" deleted successfully.')
         return redirect('customer_list')
-    return render(request, 'shop/customer_confirm_delete.html', {'customer': customer})
+        
+    context = {
+        'customer': customer,
+        'related_orders': related_orders,
+        'can_delete': related_orders == 0
+    }
+    return render(request, 'shop/customer_confirm_delete.html', context)
 
 
 @login_required
@@ -468,12 +482,41 @@ def order_status_update(request, pk):
 @login_required
 def order_delete(request, pk):
     order = get_object_or_404(Order, pk=pk)
+    
     if request.method == 'POST':
-        order_number = order.order_number
-        order.delete()
-        messages.success(request, f'Order {order_number} deleted.')
-        return redirect('order_list')
-    return render(request, 'shop/order_confirm_delete.html', {'order': order})
+        try:
+            order_number = order.order_number
+            # Check if order has related data that should be preserved
+            has_items = order.orderitem_set.exists()
+            
+            if has_items:
+                # If order has items, we might want to ask for confirmation
+                confirm = request.POST.get('confirm_delete')
+                if not confirm:
+                    messages.warning(request, f'Order {order_number} contains order items. Are you sure you want to delete it?')
+                    return render(request, 'shop/order_confirm_delete.html', {
+                        'order': order, 
+                        'has_items': has_items,
+                        'show_confirmation': True
+                    })
+            
+            order.delete()
+            messages.success(request, f'Order {order_number} and all related items have been deleted successfully.')
+            return redirect('order_list')
+            
+        except Exception as e:
+            messages.error(request, f'Error deleting order: {str(e)}')
+            return render(request, 'shop/order_confirm_delete.html', {'order': order})
+    
+    # Check for related data for display
+    has_items = order.orderitem_set.exists()
+    item_count = order.orderitem_set.count()
+    
+    return render(request, 'shop/order_confirm_delete.html', {
+        'order': order,
+        'has_items': has_items,
+        'item_count': item_count
+    })
 
 
 # ============== Quick Billing ==============
@@ -1017,3 +1060,172 @@ def receipt_preview(request, payment_id):
     except Exception as e:
         messages.error(request, f"Error previewing receipt: {str(e)}")
         return redirect('payment_detail', pk=payment_id)
+
+
+# ============== User Management ==============
+
+@login_required
+def user_list(request):
+    """List all users with management options"""
+    from django.contrib.auth import get_user_model
+    User = get_user_model()
+    
+    if not request.user.is_superuser:
+        messages.error(request, 'Access denied. Admin privileges required.')
+        return redirect('dashboard')
+    
+    users = User.objects.all().order_by('-date_joined')
+    
+    context = {
+        'users': users,
+        'total_users': users.count()
+    }
+    return render(request, 'shop/user_list.html', context)
+
+
+@login_required 
+def user_add(request):
+    """Add new user"""
+    from django.contrib.auth import get_user_model
+    from django.contrib.auth.forms import UserCreationForm
+    from django.contrib.auth.models import User
+    
+    if not request.user.is_superuser:
+        messages.error(request, 'Access denied. Admin privileges required.')
+        return redirect('dashboard')
+    
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        password1 = request.POST.get('password1')
+        password2 = request.POST.get('password2')
+        email = request.POST.get('email', '')
+        first_name = request.POST.get('first_name', '')
+        last_name = request.POST.get('last_name', '')
+        is_staff = request.POST.get('is_staff') == 'on'
+        is_superuser = request.POST.get('is_superuser') == 'on'
+        
+        # Validation
+        if not username or not password1:
+            messages.error(request, 'Username and password are required.')
+            return render(request, 'shop/user_form.html')
+        
+        if password1 != password2:
+            messages.error(request, 'Passwords do not match.')
+            return render(request, 'shop/user_form.html')
+            
+        if User.objects.filter(username=username).exists():
+            messages.error(request, 'Username already exists.')
+            return render(request, 'shop/user_form.html')
+        
+        # Create user
+        user = User.objects.create_user(
+            username=username,
+            password=password1,
+            email=email,
+            first_name=first_name,
+            last_name=last_name
+        )
+        
+        user.is_staff = is_staff
+        user.is_superuser = is_superuser
+        user.save()
+        
+        messages.success(request, f'User {username} created successfully.')
+        return redirect('user_list')
+    
+    return render(request, 'shop/user_form.html', {'action': 'Add'})
+
+
+@login_required
+def user_edit(request, pk):
+    """Edit existing user"""
+    from django.contrib.auth import get_user_model
+    User = get_user_model()
+    
+    if not request.user.is_superuser:
+        messages.error(request, 'Access denied. Admin privileges required.')
+        return redirect('dashboard')
+        
+    user = get_object_or_404(User, pk=pk)
+    
+    if request.method == 'POST':
+        user.username = request.POST.get('username', user.username)
+        user.email = request.POST.get('email', user.email)
+        user.first_name = request.POST.get('first_name', user.first_name)
+        user.last_name = request.POST.get('last_name', user.last_name)
+        user.is_staff = request.POST.get('is_staff') == 'on'
+        user.is_superuser = request.POST.get('is_superuser') == 'on'
+        user.is_active = request.POST.get('is_active') == 'on'
+        
+        # Change password if provided
+        new_password = request.POST.get('new_password')
+        if new_password:
+            confirm_password = request.POST.get('confirm_password')
+            if new_password == confirm_password:
+                user.set_password(new_password)
+                messages.info(request, 'Password updated successfully.')
+            else:
+                messages.error(request, 'Password confirmation does not match.')
+                return render(request, 'shop/user_form.html', {'user': user, 'action': 'Edit'})
+        
+        user.save()
+        messages.success(request, f'User {user.username} updated successfully.')
+        return redirect('user_list')
+    
+    return render(request, 'shop/user_form.html', {'user': user, 'action': 'Edit'})
+
+
+@login_required
+def user_delete(request, pk):
+    """Delete user with confirmation"""
+    from django.contrib.auth import get_user_model
+    User = get_user_model()
+    
+    if not request.user.is_superuser:
+        messages.error(request, 'Access denied. Admin privileges required.')
+        return redirect('dashboard')
+        
+    user = get_object_or_404(User, pk=pk)
+    
+    # Prevent self-deletion
+    if user == request.user:
+        messages.error(request, 'You cannot delete your own account.')
+        return redirect('user_list')
+    
+    # Prevent deletion of superusers by non-superusers
+    if user.is_superuser and not request.user.is_superuser:
+        messages.error(request, 'Cannot delete superuser account.')
+        return redirect('user_list')
+    
+    if request.method == 'POST':
+        username = user.username
+        user.delete()
+        messages.success(request, f'User {username} deleted successfully.')
+        return redirect('user_list')
+    
+    return render(request, 'shop/user_confirm_delete.html', {'user': user})
+
+
+@login_required
+def user_toggle_status(request, pk):
+    """Toggle user active status"""
+    from django.contrib.auth import get_user_model
+    User = get_user_model()
+    
+    if not request.user.is_superuser:
+        return JsonResponse({'success': False, 'error': 'Access denied'})
+        
+    user = get_object_or_404(User, pk=pk)
+    
+    if user == request.user:
+        return JsonResponse({'success': False, 'error': 'Cannot deactivate your own account'})
+    
+    user.is_active = not user.is_active
+    user.save()
+    
+    status = 'activated' if user.is_active else 'deactivated'
+    return JsonResponse({
+        'success': True, 
+        'message': f'User {user.username} {status}',
+        'is_active': user.is_active
+    })

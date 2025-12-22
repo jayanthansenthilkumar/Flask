@@ -75,4 +75,11 @@ urlpatterns = [
     path('print/receipt/<int:payment_id>/', views.print_receipt, name='print_receipt'),
     path('preview/invoice/<int:invoice_id>/', views.invoice_preview, name='invoice_preview'),
     path('preview/receipt/<int:payment_id>/', views.receipt_preview, name='receipt_preview'),
+    
+    # User Management
+    path('users/', views.user_list, name='user_list'),
+    path('users/add/', views.user_add, name='user_add'),
+    path('users/<int:pk>/edit/', views.user_edit, name='user_edit'),
+    path('users/<int:pk>/delete/', views.user_delete, name='user_delete'),
+    path('users/<int:pk>/toggle/', views.user_toggle_status, name='user_toggle_status'),
 ]

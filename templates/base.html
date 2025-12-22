@@ -80,6 +80,14 @@
                     <span>Settings</span>
                 </a>
             </li>
+            {% if user.is_superuser %}
+            <li class="nav-item">
+                <a href="{% url 'user_list' %}" class="nav-link {% if 'user' in request.resolver_match.url_name %}active{% endif %}">
+                    <i class="bi bi-people"></i>
+                    <span>Users</span>
+                </a>
+            </li>
+            {% endif %}
         </ul>
         
         <div class="sidebar-footer">

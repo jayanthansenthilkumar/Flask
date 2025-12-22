@@ -39,7 +39,11 @@
                     <div class="row">
                         <div class="col-6">
                             <strong>Items:</strong><br>
-                            {{ order.items.count }}
+                            {% if has_items %}
+                                {{ item_count }} item{{ item_count|pluralize }}
+                            {% else %}
+                                No items
+                            {% endif %}
                         </div>
                         <div class="col-6">
                             <strong>Total:</strong><br>
@@ -48,13 +52,25 @@
                     </div>
                 </div>
                 
+                {% if has_items %}
+                <div class="alert alert-warning text-start">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    <strong>Warning:</strong> This order contains {{ item_count }} item{{ item_count|pluralize }}. 
+                    Deleting this order will also delete all associated order items permanently.
+                </div>
+                {% endif %}
+                
                 <form method="post" class="mt-4">
                     {% csrf_token %}
+                    {% if show_confirmation %}
+                        <input type="hidden" name="confirm_delete" value="true">
+                    {% endif %}
                     <a href="{% url 'order_detail' order.pk %}" class="btn btn-secondary me-2">
                         <i class="bi bi-arrow-left me-1"></i>Cancel
                     </a>
-                    <button type="submit" class="btn btn-danger">
-                        <i class="bi bi-trash me-1"></i>Yes, Delete
+                    <button type="submit" class="btn btn-danger" 
+                            {% if has_items %}onclick="return confirm('This will permanently delete the order and all {{ item_count }} item{{ item_count|pluralize }}. Are you absolutely sure?')"{% endif %}>
+                        <i class="bi bi-trash me-1"></i>Yes, Delete{% if has_items %} Everything{% endif %}
                     </button>
                 </form>
             </div>
