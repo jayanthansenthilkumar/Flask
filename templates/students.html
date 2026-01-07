@@ -5,24 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Students - Student Management System</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
 </head>
 <body>
     <!-- Sidebar -->
     <div class="sidebar">
         <div class="logo">
-            <h2>🎓 SMS</h2>
+            <h2><i class="ri-graduation-cap-fill"></i> SMS</h2>
             <p>Student Management</p>
         </div>
         <nav class="nav-menu">
-            <a href="/dashboard" class="nav-item">
-                <span class="icon">📊</span>
+            <a href="/" class="nav-item">
+                <i class="ri-dashboard-line"></i>
                 <span class="text">Dashboard</span>
             </a>
             <a href="/students" class="nav-item active">
-                <span class="icon">👥</span>
+                <i class="ri-group-line"></i>
                 <span class="text">Students</span>
             </a>
         </nav>
@@ -36,13 +34,24 @@
         <!-- Header -->
         <header class="header">
             <div class="header-left">
-                <button class="menu-toggle" id="menu-toggle">☰</button>
+                <button class="menu-toggle" id="menu-toggle">
+                    <i class="ri-menu-line"></i>
+                </button>
                 <h1>Students Management</h1>
             </div>
             <div class="header-right">
-                <div class="user-profile">
-                    <span class="user-name">Admin</span>
-                    <div class="user-avatar">A</div>
+                <div class="user-dropdown">
+                    <button class="user-profile" id="userDropdownBtn">
+                        <span class="user-name">Admin</span>
+                        <div class="user-avatar"><i class="ri-user-line"></i></div>
+                        <i class="ri-arrow-down-s-line dropdown-icon"></i>
+                    </button>
+                    <div class="dropdown-menu" id="userDropdownMenu">
+                        <a href="#" class="dropdown-item"><i class="ri-user-line"></i> Profile</a>
+                        <a href="#" class="dropdown-item"><i class="ri-settings-3-line"></i> Settings</a>
+                        <div class="dropdown-divider"></div>
+                        <a href="#" class="dropdown-item"><i class="ri-logout-box-line"></i> Logout</a>
+                    </div>
                 </div>
             </div>
         </header>
@@ -52,7 +61,7 @@
             <!-- Add Student Card -->
             <div class="card">
                 <div class="card-header">
-                    <h3 id="form-title">Add New Student</h3>
+                    <h3 id="form-title"><i class="ri-user-add-line"></i> Add New Student</h3>
                 </div>
                 <div class="card-body">
                     <form id="student-form">
@@ -78,8 +87,12 @@
                             </div>
                         </div>
                         <div class="form-buttons">
-                            <button type="submit" class="btn btn-primary" id="submit-btn">Add Student</button>
-                            <button type="button" class="btn btn-secondary" id="cancel-btn" style="display: none;">Cancel</button>
+                            <button type="submit" class="btn btn-primary" id="submit-btn">
+                                <i class="ri-add-line"></i> Add Student
+                            </button>
+                            <button type="button" class="btn btn-secondary" id="cancel-btn" style="display: none;">
+                                <i class="ri-close-line"></i> Cancel
+                            </button>
                         </div>
                     </form>
                 </div>
@@ -88,8 +101,9 @@
             <!-- Students List Card -->
             <div class="card">
                 <div class="card-header">
-                    <h3>All Students</h3>
+                    <h3><i class="ri-group-line"></i> All Students</h3>
                     <div class="search-box">
+                        <i class="ri-search-line search-icon"></i>
                         <input type="text" id="search-input" placeholder="Search students...">
                     </div>
                 </div>
@@ -118,5 +132,28 @@
     </div>
 
     <script src="{{ url_for('static', filename='students.js') }}"></script>
+    <script>
+        // User dropdown toggle
+        document.getElementById('userDropdownBtn').addEventListener('click', function(e) {
+            e.stopPropagation();
+            document.getElementById('userDropdownMenu').classList.toggle('show');
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+            const dropdown = document.getElementById('userDropdownMenu');
+            if (dropdown.classList.contains('show')) {
+                dropdown.classList.remove('show');
+            }
+        });
+
+        // Menu toggle for mobile
+        const menuToggle = document.getElementById('menu-toggle');
+        const sidebar = document.querySelector('.sidebar');
+        
+        menuToggle.addEventListener('click', () => {
+            sidebar.classList.toggle('active');
+        });
+    </script>
 </body>
 </html>

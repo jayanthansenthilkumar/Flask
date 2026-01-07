@@ -70,16 +70,10 @@ def init_db():
         print("Error creating database: " + str(error))
 
 
-# Home page route - redirect to dashboard
+# Home page route - show dashboard
 @app.route('/')
 def home():
-    return render_template('dashboard.html')
-
-
-# Dashboard page route
-@app.route('/dashboard')
-def dashboard():
-    return render_template('dashboard.html')
+    return render_template('index.html')
 
 
 # Students page route
