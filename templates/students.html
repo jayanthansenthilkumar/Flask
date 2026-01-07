@@ -6,6 +6,7 @@
     <title>Students - Student Management System</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body>
     <!-- Sidebar -->
@@ -58,44 +59,11 @@
 
         <!-- Page Content -->
         <div class="page-content">
-            <!-- Add Student Card -->
-            <div class="card">
-                <div class="card-header">
-                    <h3 id="form-title"><i class="ri-user-add-line"></i> Add New Student</h3>
-                </div>
-                <div class="card-body">
-                    <form id="student-form">
-                        <input type="hidden" id="student-id">
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="student-name">Name *</label>
-                                <input type="text" id="student-name" placeholder="Enter student name..." required>
-                            </div>
-                            <div class="form-group">
-                                <label for="student-email">Email</label>
-                                <input type="email" id="student-email" placeholder="Enter email...">
-                            </div>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="student-age">Age</label>
-                                <input type="number" id="student-age" placeholder="Enter age..." min="1" max="150">
-                            </div>
-                            <div class="form-group">
-                                <label for="student-course">Course</label>
-                                <input type="text" id="student-course" placeholder="Enter course...">
-                            </div>
-                        </div>
-                        <div class="form-buttons">
-                            <button type="submit" class="btn btn-primary" id="submit-btn">
-                                <i class="ri-add-line"></i> Add Student
-                            </button>
-                            <button type="button" class="btn btn-secondary" id="cancel-btn" style="display: none;">
-                                <i class="ri-close-line"></i> Cancel
-                            </button>
-                        </div>
-                    </form>
-                </div>
+            <!-- Add Button -->
+            <div class="add-btn-container">
+                <button class="btn-add-modal" id="openModalBtn">
+                    <i class="ri-user-add-line"></i> Add New Student
+                </button>
             </div>
 
             <!-- Students List Card -->
@@ -131,8 +99,87 @@
         </div>
     </div>
 
+    <!-- Modal for Add/Edit Student -->
+    <div class="modal" id="studentModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="form-title"><i class="ri-user-add-line"></i> Add New Student</h3>
+                <button class="modal-close" id="closeModalBtn">
+                    <i class="ri-close-line"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="student-form">
+                    <input type="hidden" id="student-id">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="student-name">Name *</label>
+                            <input type="text" id="student-name" placeholder="Enter student name..." required>
+                        </div>
+                        <div class="form-group">
+                            <label for="student-email">Email</label>
+                            <input type="email" id="student-email" placeholder="Enter email...">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="student-age">Age</label>
+                            <input type="number" id="student-age" placeholder="Enter age..." min="1" max="150">
+                        </div>
+                        <div class="form-group">
+                            <label for="student-course">Course</label>
+                            <input type="text" id="student-course" placeholder="Enter course...">
+                        </div>
+                    </div>
+                    <div class="form-buttons">
+                        <button type="submit" class="btn btn-primary" id="submit-btn">
+                            <i class="ri-add-line"></i> Add Student
+                        </button>
+                        <button type="button" class="btn btn-secondary" id="cancel-btn">
+                            <i class="ri-close-line"></i> Cancel
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <script src="{{ url_for('static', filename='students.js') }}"></script>
     <script>
+        // Modal controls
+        const modal = document.getElementById('studentModal');
+        const openModalBtn = document.getElementById('openModalBtn');
+        const closeModalBtn = document.getElementById('closeModalBtn');
+        const cancelBtn = document.getElementById('cancel-btn');
+
+        openModalBtn.addEventListener('click', () => {
+            modal.classList.add('show');
+        });
+
+        closeModalBtn.addEventListener('click', () => {
+            modal.classList.remove('show');
+            if (typeof resetForm === 'function') {
+                resetForm();
+            }
+        });
+
+        cancelBtn.addEventListener('click', () => {
+            modal.classList.remove('show');
+            if (typeof resetForm === 'function') {
+                resetForm();
+            }
+        });
+
+        // Close modal when clicking outside
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.classList.remove('show');
+                if (typeof resetForm === 'function') {
+                    resetForm();
+                }
+            }
+        });
+
         // User dropdown toggle
         document.getElementById('userDropdownBtn').addEventListener('click', function(e) {
             e.stopPropagation();
@@ -154,6 +201,11 @@
         menuToggle.addEventListener('click', () => {
             sidebar.classList.toggle('active');
         });
+
+        // Open modal for editing
+        function openEditModal() {
+            modal.classList.add('show');
+        }
     </script>
 </body>
 </html>

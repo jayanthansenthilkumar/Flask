@@ -126,6 +126,8 @@ function createStudent(studentData) {
         return response.json();
     })
     .then(function(data) {
+        // Close modal
+        document.getElementById('studentModal').classList.remove('show');
         resetForm();
         loadStudents();
         showSuccess('Student created successfully!');
@@ -148,19 +150,18 @@ function editStudent(id) {
             isEditing = true;
             editingId = id;
             
-            document.getElementById('form-title').textContent = 'Edit Student';
+            document.getElementById('form-title').innerHTML = '<i class="ri-edit-line"></i> Edit Student';
             document.getElementById('student-id').value = student.id;
             document.getElementById('student-name').value = student.name;
             document.getElementById('student-email').value = student.email || '';
             document.getElementById('student-age').value = student.age || '';
             document.getElementById('student-course').value = student.course || '';
-            document.getElementById('submit-btn').textContent = 'Update Student';
-            document.getElementById('cancel-btn').style.display = 'inline-block';
+            document.getElementById('submit-btn').innerHTML = '<i class="ri-check-line"></i> Update Student';
+            
+            // Open modal
+            openEditModal();
             
             document.getElementById('student-name').focus();
-            
-            // Scroll to form
-            document.querySelector('.card').scrollIntoView({ behavior: 'smooth' });
         })
         .catch(function(error) {
             showError('Error fetching student: ' + error.message);
@@ -185,6 +186,8 @@ function updateStudent(id, studentData) {
         return response.json();
     })
     .then(function(data) {
+        // Close modal
+        document.getElementById('studentModal').classList.remove('show');
         resetForm();
         loadStudents();
         showSuccess('Student updated successfully!');
@@ -196,27 +199,36 @@ function updateStudent(id, studentData) {
 
 // Function to delete student
 function deleteStudent(id) {
-    if (!confirm('Are you sure you want to delete this student?')) {
-        return;
-    }
-
-    fetch('/api/students/' + id, {
-        method: 'DELETE'
-    })
-    .then(function(response) {
-        if (!response.ok) {
-            return response.json().then(function(error) {
-                throw new Error(error.error || 'Failed to delete student');
+    Swal.fire({
+        title: 'Are you sure?',
+        text: "You won't be able to revert this!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#ef4444',
+        cancelButtonColor: '#64748b',
+        confirmButtonText: 'Yes, delete it!',
+        cancelButtonText: 'Cancel'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            fetch('/api/students/' + id, {
+                method: 'DELETE'
+            })
+            .then(function(response) {
+                if (!response.ok) {
+                    return response.json().then(function(error) {
+                        throw new Error(error.error || 'Failed to delete student');
+                    });
+                }
+                return response.json();
+            })
+            .then(function(data) {
+                loadStudents();
+                showSuccess('Student deleted successfully!');
+            })
+            .catch(function(error) {
+                showError('Error deleting student: ' + error.message);
             });
         }
-        return response.json();
-    })
-    .then(function(data) {
-        loadStudents();
-        showSuccess('Student deleted successfully!');
-    })
-    .catch(function(error) {
-        showError('Error deleting student: ' + error.message);
     });
 }
 
@@ -225,14 +237,14 @@ function resetForm() {
     isEditing = false;
     editingId = null;
     
-    document.getElementById('form-title').textContent = 'Add New Student';
+    document.getElementById('student-form').reset();
+    document.getElementById('form-title').innerHTML = '<i class="ri-user-add-line"></i> Add New Student';
     document.getElementById('student-id').value = '';
     document.getElementById('student-name').value = '';
     document.getElementById('student-email').value = '';
     document.getElementById('student-age').value = '';
     document.getElementById('student-course').value = '';
-    document.getElementById('submit-btn').textContent = 'Add Student';
-    document.getElementById('cancel-btn').style.display = 'none';
+    document.getElementById('submit-btn').innerHTML = '<i class="ri-add-line"></i> Add Student';
 }
 
 // Function to filter students based on search
@@ -269,34 +281,25 @@ function showLoading(show) {
 
 // Helper function to show error message
 function showError(message) {
-    var errorDiv = document.getElementById('error-message');
-    if (!errorDiv) {
-        return;
-    }
-    
-    errorDiv.textContent = message;
-    errorDiv.className = 'alert error';
-    errorDiv.style.display = 'block';
-    
-    setTimeout(function() {
-        errorDiv.style.display = 'none';
-    }, 5000);
+    Swal.fire({
+        icon: 'error',
+        title: 'Error!',
+        text: message,
+        confirmButtonColor: '#3b82f6',
+        timer: 5000
+    });
 }
 
 // Helper function to show success message
 function showSuccess(message) {
-    var errorDiv = document.getElementById('error-message');
-    if (!errorDiv) {
-        return;
-    }
-    
-    errorDiv.textContent = message;
-    errorDiv.className = 'alert success';
-    errorDiv.style.display = 'block';
-    
-    setTimeout(function() {
-        errorDiv.style.display = 'none';
-    }, 3000);
+    Swal.fire({
+        icon: 'success',
+        title: 'Success!',
+        text: message,
+        confirmButtonColor: '#3b82f6',
+        timer: 3000,
+        showConfirmButton: false
+    });
 }
 
 // Helper function to escape HTML

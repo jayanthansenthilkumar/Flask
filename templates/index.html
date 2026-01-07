@@ -6,6 +6,7 @@
     <title>Dashboard - Student Management System</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body>
     <!-- Sidebar -->
@@ -160,9 +161,14 @@
                 
                 const students = await response.json();
                 updateStats(students);
-                displayRecentStudents(students.slice(0, 5));
+                displayRecentStudents(students.slice(-5).reverse());
             } catch (error) {
-                console.error('Error loading dashboard data:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error!',
+                    text: 'Error loading dashboard data: ' + error.message,
+                    confirmButtonColor: '#3b82f6'
+                });
             } finally {
                 document.getElementById('loading').style.display = 'none';
             }

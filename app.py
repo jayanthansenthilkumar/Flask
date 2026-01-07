@@ -152,7 +152,6 @@ def create_student():
         connection.close()
         
         # Prepare response
-        created_at = student[5].strftime("%Y-%m-%d %H:%M:%S")
         response = {
             "id": student[0],
             "name": student[1],
@@ -181,7 +180,7 @@ def get_students():
         cursor = connection.cursor()
         
         # Select all students
-        select_query = "SELECT * FROM student ORDER BY id DESC"
+        select_query = "SELECT * FROM student ORDER BY id ASC"
         cursor.execute(select_query)
         students = cursor.fetchall()
         
