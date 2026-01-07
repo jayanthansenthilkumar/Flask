@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Student Management System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="logo">
+            <h2>🎓 SMS</h2>
+            <p>Student Management</p>
+        </div>
+        <nav class="nav-menu">
+            <a href="/dashboard" class="nav-item active">
+                <span class="icon">📊</span>
+                <span class="text">Dashboard</span>
+            </a>
+            <a href="/students" class="nav-item">
+                <span class="icon">👥</span>
+                <span class="text">Students</span>
+            </a>
+        </nav>
+        <div class="sidebar-footer">
+            <p>Version 1.0.0</p>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <button class="menu-toggle" id="menu-toggle">☰</button>
+                <h1>Dashboard</h1>
+            </div>
+            <div class="header-right">
+                <div class="user-profile">
+                    <span class="user-name">Admin</span>
+                    <div class="user-avatar">A</div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Page Content -->
+        <div class="page-content">
+            <!-- Welcome Card -->
+            <div class="welcome-card">
+                <div class="welcome-content">
+                    <h2>Welcome back, Admin! 👋</h2>
+                    <p>Here's what's happening with your students today.</p>
+                </div>
+                <div class="welcome-image">
+                    <div class="welcome-icon">📚</div>
+                </div>
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon blue">👥</div>
+                    <div class="stat-content">
+                        <p class="stat-label">Total Students</p>
+                        <h3 class="stat-value" id="total-students">0</h3>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon green">✅</div>
+                    <div class="stat-content">
+                        <p class="stat-label">Active Students</p>
+                        <h3 class="stat-value" id="active-students">0</h3>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon orange">📚</div>
+                    <div class="stat-content">
+                        <p class="stat-label">Total Courses</p>
+                        <h3 class="stat-value" id="total-courses">0</h3>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon purple">📈</div>
+                    <div class="stat-content">
+                        <p class="stat-label">Avg Age</p>
+                        <h3 class="stat-value" id="avg-age">0</h3>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Students -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>Recent Students</h3>
+                    <a href="/students" class="view-all">View All →</a>
+                </div>
+                <div class="card-body">
+                    <div id="loading" class="loading" style="display: none;">Loading...</div>
+                    <table class="data-table" id="recent-students-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Age</th>
+                                <th>Course</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recent-students-body">
+                            <!-- Recent students will be loaded here -->
+                        </tbody>
+                    </table>
+                    <p id="no-students" class="no-data" style="display: none;">No students found.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='dashboard.js') }}"></script>
+</body>
+</html>
