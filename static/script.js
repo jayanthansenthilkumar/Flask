@@ -3,6 +3,7 @@
 let isEditing = false;
 let editingId = null;
 let allStudents = [];
+let departmentShortNames = {};
 
 document.addEventListener('DOMContentLoaded', function() {
     setupMenuToggle();
@@ -82,6 +83,17 @@ function setupModalControls() {
 }
 
 function loadDropdownData() {
+    fetch('/api/departments/short')
+        .then(function(response) {
+            return response.json();
+        })
+        .then(function(shortNames) {
+            departmentShortNames = shortNames;
+        })
+        .catch(function(error) {
+            console.error('Error loading department short names:', error);
+        });
+    
     fetch('/api/states')
         .then(function(response) {
             return response.json();
@@ -457,8 +469,10 @@ function displayStudents(students) {
         html = html + '<td>' + escapeHtml(student.name) + '</td>';
         html = html + '<td>' + escapeHtml(student.email || '-') + '</td>';
         html = html + '<td>' + escapeHtml(student.phoneno || '-') + '</td>';
+        // html = html + '<td>' + escapeHtml(student.state || '-') + '</td>';
+        // html = html + '<td>' + escapeHtml(student.city || '-') + '</td>';
         html = html + '<td>' + escapeHtml(student.college || '-') + '</td>';
-        html = html + '<td>' + escapeHtml(student.department || '-') + '</td>';
+        html = html + '<td>' + getShortDepartmentName(student.department) + '</td>';
         html = html + '<td>';
         html = html + '<button class="btn btn-edit" onclick="editStudent(' + student.id + ')">Edit</button>';
         html = html + '<button class="btn btn-delete" onclick="deleteStudent(' + student.id + ')">Delete</button>';
@@ -542,16 +556,16 @@ function editStudent(id) {
                 stateInput.value = student.state || '';
                 if (student.state) {
                     loadCities(student.state);
+                    setTimeout(function() {
+                        if (cityInput) cityInput.value = student.city || '';
+                        if (student.city) {
+                            loadColleges(student.state, student.city);
+                            setTimeout(function() {
+                                if (collegeInput) collegeInput.value = student.college || '';
+                            }, 500);
+                        }
+                    }, 500);
                 }
-            }
-            if (cityInput) cityInput.value = student.city || '';
-            if (collegeInput) {
-                if (student.state) {
-                    loadColleges(student.state, student.city || '');
-                }
-                setTimeout(function() {
-                    collegeInput.value = student.college || '';
-                }, 500);
             }
             if (departmentInput) departmentInput.value = student.department || '';
             
@@ -749,4 +763,17 @@ function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+}
+
+function getShortDepartmentName(department) {
+    if (!department) {
+        return '-';
+    }
+    
+    const shortName = departmentShortNames[department];
+    if (shortName) {
+        return '<span class="dept-short" title="' + escapeHtml(department) + '">' + escapeHtml(shortName) + '</span>';
+    }
+    
+    return escapeHtml(department);
 }

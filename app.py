@@ -5,7 +5,7 @@ import mysql.connector
 from states import STATES
 from cities import CITIES_BY_STATE
 from colleges import COLLEGES
-from departments import DEPARTMENTS
+from departments import DEPARTMENTS, DEPARTMENT_SHORT_NAMES
 
 app = Flask(__name__)
 
@@ -109,6 +109,10 @@ def get_colleges():
 @app.route('/api/departments', methods=['GET'])
 def get_departments():
     return jsonify(DEPARTMENTS), 200
+
+@app.route('/api/departments/short', methods=['GET'])
+def get_department_short_names():
+    return jsonify(DEPARTMENT_SHORT_NAMES), 200
 
 @app.route('/api/students', methods=['POST'])
 def create_student():
