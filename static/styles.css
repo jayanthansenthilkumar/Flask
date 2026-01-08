@@ -419,18 +419,22 @@ body {
 
 input[type="text"],
 input[type="email"],
-input[type="number"] {
+input[type="number"],
+select {
     padding: 8px 12px;
     font-size: 12px;
     border: 1px solid #e2e8f0;
     border-radius: 6px;
     transition: all 0.2s ease;
     font-family: 'Inter', sans-serif;
+    width: 100%;
+    background: white;
 }
 
 input[type="text"]:focus,
 input[type="email"]:focus,
-input[type="number"]:focus {
+input[type="number"]:focus,
+select:focus {
     outline: none;
     border-color: #3b82f6;
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);

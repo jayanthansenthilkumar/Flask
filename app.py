@@ -42,7 +42,9 @@ def init_db():
                 name VARCHAR(100) NOT NULL,
                 email VARCHAR(100),
                 age INT,
-                course VARCHAR(100)
+                phoneno VARCHAR(15),
+                college VARCHAR(200),
+                department VARCHAR(100)
             )
         """
         cursor.execute(create_table_query)
@@ -64,6 +66,58 @@ def students():
 @app.route('/api/health')
 def health():
     return jsonify({"status": "ok"}), 200
+
+@app.route('/api/colleges', methods=['GET'])
+def get_colleges():
+    colleges = [
+        "Indian Institute of Technology Delhi",
+        "Indian Institute of Technology Bombay",
+        "Indian Institute of Technology Madras",
+        "Indian Institute of Technology Kanpur",
+        "Indian Institute of Technology Kharagpur",
+        "Indian Institute of Science Bangalore",
+        "Jawaharlal Nehru University",
+        "University of Delhi",
+        "Anna University",
+        "Jadavpur University",
+        "Banaras Hindu University",
+        "Aligarh Muslim University",
+        "National Institute of Technology Trichy",
+        "National Institute of Technology Warangal",
+        "Vellore Institute of Technology",
+        "Birla Institute of Technology and Science Pilani",
+        "Manipal Academy of Higher Education",
+        "University of Hyderabad",
+        "Amity University",
+        "SRM Institute of Science and Technology"
+    ]
+    return jsonify(colleges), 200
+
+@app.route('/api/departments', methods=['GET'])
+def get_departments():
+    departments = [
+        "Computer Science and Engineering",
+        "Information Technology",
+        "Electronics and Communication Engineering",
+        "Electrical Engineering",
+        "Mechanical Engineering",
+        "Civil Engineering",
+        "Chemical Engineering",
+        "Biotechnology",
+        "Aerospace Engineering",
+        "Automobile Engineering",
+        "Mathematics",
+        "Physics",
+        "Chemistry",
+        "Business Administration",
+        "Commerce",
+        "Economics",
+        "English Literature",
+        "Psychology",
+        "Sociology",
+        "Political Science"
+    ]
+    return jsonify(departments), 200
 
 @app.route('/api/students', methods=['POST'])
 def create_student():
@@ -96,12 +150,20 @@ def create_student():
         else:
             age = int(age)
         
-        course = data.get('course', '').strip()
-        if not course:
-            course = None
+        phoneno = data.get('phoneno', '').strip()
+        if not phoneno:
+            phoneno = None
         
-        insert_query = "INSERT INTO student (name, email, age, course) VALUES (%s, %s, %s, %s)"
-        values = (name, email, age, course)
+        college = data.get('college', '').strip()
+        if not college:
+            college = None
+        
+        department = data.get('department', '').strip()
+        if not department:
+            department = None
+        
+        insert_query = "INSERT INTO student (name, email, age, phoneno, college, department) VALUES (%s, %s, %s, %s, %s, %s)"
+        values = (name, email, age, phoneno, college, department)
         cursor.execute(insert_query, values)
         connection.commit()
         
@@ -117,7 +179,9 @@ def create_student():
             "name": student[1],
             "email": student[2],
             "age": student[3],
-            "course": student[4]
+            "phoneno": student[4],
+            "college": student[5],
+            "department": student[6]
         }
         
         return jsonify(response), 201
@@ -147,7 +211,9 @@ def get_students():
                 "name": student[1],
                 "email": student[2] if student[2] else '',
                 "age": student[3] if student[3] else '',
-                "course": student[4] if student[4] else ''
+                "phoneno": student[4] if student[4] else '',
+                "college": student[5] if student[5] else '',
+                "department": student[6] if student[6] else ''
             }
             result.append(student_data)
         
@@ -177,7 +243,9 @@ def get_student(student_id):
                 "name": student[1],
                 "email": student[2] if student[2] else '',
                 "age": student[3] if student[3] else '',
-                "course": student[4] if student[4] else ''
+                "phoneno": student[4] if student[4] else '',
+                "college": student[5] if student[5] else '',
+                "department": student[6] if student[6] else ''
             }
             return jsonify(response), 200
         else:
@@ -218,12 +286,20 @@ def update_student(student_id):
         else:
             age = int(age)
         
-        course = data.get('course', '').strip()
-        if not course:
-            course = None
+        phoneno = data.get('phoneno', '').strip()
+        if not phoneno:
+            phoneno = None
         
-        update_query = "UPDATE student SET name = %s, email = %s, age = %s, course = %s WHERE id = %s"
-        values = (name, email, age, course, student_id)
+        college = data.get('college', '').strip()
+        if not college:
+            college = None
+        
+        department = data.get('department', '').strip()
+        if not department:
+            department = None
+        
+        update_query = "UPDATE student SET name = %s, email = %s, age = %s, phoneno = %s, college = %s, department = %s WHERE id = %s"
+        values = (name, email, age, phoneno, college, department, student_id)
         cursor.execute(update_query, values)
         connection.commit()
         
@@ -243,7 +319,9 @@ def update_student(student_id):
             "name": student[1],
             "email": student[2] if student[2] else '',
             "age": student[3] if student[3] else '',
-            "course": student[4] if student[4] else ''
+            "phoneno": student[4] if student[4] else '',
+            "college": student[5] if student[5] else '',
+            "department": student[6] if student[6] else ''
         }
         
         return jsonify(response), 200

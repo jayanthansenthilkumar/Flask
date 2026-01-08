@@ -10,6 +10,7 @@ document.addEventListener('DOMContentLoaded', function() {
     setupModalControls();
     setupFormValidation();
     loadDashboardData();
+    loadDropdownData();
 });
 
 function setupMenuToggle() {
@@ -80,6 +81,46 @@ function setupModalControls() {
     });
 }
 
+function loadDropdownData() {
+    fetch('/api/colleges')
+        .then(function(response) {
+            return response.json();
+        })
+        .then(function(colleges) {
+            const collegeSelect = document.getElementById('student-college');
+            if (collegeSelect) {
+                colleges.forEach(function(college) {
+                    const option = document.createElement('option');
+                    option.value = college;
+                    option.textContent = college;
+                    collegeSelect.appendChild(option);
+                });
+            }
+        })
+        .catch(function(error) {
+            console.error('Error loading colleges:', error);
+        });
+    
+    fetch('/api/departments')
+        .then(function(response) {
+            return response.json();
+        })
+        .then(function(departments) {
+            const departmentSelect = document.getElementById('student-department');
+            if (departmentSelect) {
+                departments.forEach(function(department) {
+                    const option = document.createElement('option');
+                    option.value = department;
+                    option.textContent = department;
+                    departmentSelect.appendChild(option);
+                });
+            }
+        })
+        .catch(function(error) {
+            console.error('Error loading departments:', error);
+        });
+}
+
 function setupFormValidation() {
     const studentForm = document.getElementById('student-form');
     
@@ -93,12 +134,16 @@ function setupFormValidation() {
         const nameInput = document.getElementById('student-name');
         const emailInput = document.getElementById('student-email');
         const ageInput = document.getElementById('student-age');
-        const courseInput = document.getElementById('student-course');
+        const phonenoInput = document.getElementById('student-phoneno');
+        const collegeInput = document.getElementById('student-college');
+        const departmentInput = document.getElementById('student-department');
         
         const name = nameInput.value.trim();
         const email = emailInput.value.trim();
         const age = ageInput.value;
-        const course = courseInput.value.trim();
+        const phoneno = phonenoInput.value.trim();
+        const college = collegeInput.value;
+        const department = departmentInput.value;
         
         if (!name) {
             showError('Please enter a student name');
@@ -109,7 +154,9 @@ function setupFormValidation() {
             name: name,
             email: email || null,
             age: age ? parseInt(age) : null,
-            course: course || null
+            phoneno: phoneno || null,
+            college: college || null,
+            department: department || null
         };
         
         if (isEditing) {
@@ -153,11 +200,11 @@ function loadDashboardData() {
 function updateDashboardStats(students) {
     const totalStudents = students.length;
     
-    const courses = [];
+    const colleges = [];
     for (let i = 0; i < students.length; i++) {
-        const course = students[i].course;
-        if (course && courses.indexOf(course) === -1) {
-            courses.push(course);
+        const college = students[i].college;
+        if (college && colleges.indexOf(college) === -1) {
+            colleges.push(college);
         }
     }
     
@@ -173,12 +220,12 @@ function updateDashboardStats(students) {
     
     const totalStudentsElement = document.getElementById('total-students');
     const activeStudentsElement = document.getElementById('active-students');
-    const totalCoursesElement = document.getElementById('total-courses');
+    const totalCollegesElement = document.getElementById('total-colleges');
     const avgAgeElement = document.getElementById('avg-age');
     
     if (totalStudentsElement) totalStudentsElement.textContent = totalStudents;
     if (activeStudentsElement) activeStudentsElement.textContent = totalStudents;
-    if (totalCoursesElement) totalCoursesElement.textContent = courses.length;
+    if (totalCollegesElement) totalCollegesElement.textContent = colleges.length;
     if (avgAgeElement) avgAgeElement.textContent = avgAge;
 }
 
@@ -211,7 +258,8 @@ function displayRecentStudents(students) {
         html = html + '<td>' + student.id + '</td>';
         html = html + '<td>' + escapeHtml(student.name) + '</td>';
         html = html + '<td>' + escapeHtml(student.email || '-') + '</td>';
-        html = html + '<td>' + escapeHtml(student.course || '-') + '</td>';
+        html = html + '<td>' + escapeHtml(student.phoneno || '-') + '</td>';
+        html = html + '<td>' + escapeHtml(student.college || '-') + '</td>';
         html = html + '</tr>';
     }
     
@@ -275,8 +323,9 @@ function displayStudents(students) {
         html = html + '<td>' + student.id + '</td>';
         html = html + '<td>' + escapeHtml(student.name) + '</td>';
         html = html + '<td>' + escapeHtml(student.email || '-') + '</td>';
-        html = html + '<td>' + (student.age || '-') + '</td>';
-        html = html + '<td>' + escapeHtml(student.course || '-') + '</td>';
+        html = html + '<td>' + escapeHtml(student.phoneno || '-') + '</td>';
+        html = html + '<td>' + escapeHtml(student.college || '-') + '</td>';
+        html = html + '<td>' + escapeHtml(student.department || '-') + '</td>';
         html = html + '<td>';
         html = html + '<button class="btn btn-edit" onclick="editStudent(' + student.id + ')">Edit</button>';
         html = html + '<button class="btn btn-delete" onclick="deleteStudent(' + student.id + ')">Delete</button>';
@@ -345,13 +394,17 @@ function editStudent(id) {
             const nameInput = document.getElementById('student-name');
             const emailInput = document.getElementById('student-email');
             const ageInput = document.getElementById('student-age');
-            const courseInput = document.getElementById('student-course');
+            const phonenoInput = document.getElementById('student-phoneno');
+            const collegeInput = document.getElementById('student-college');
+            const departmentInput = document.getElementById('student-department');
             
             if (idInput) idInput.value = student.id;
             if (nameInput) nameInput.value = student.name;
             if (emailInput) emailInput.value = student.email || '';
             if (ageInput) ageInput.value = student.age || '';
-            if (courseInput) courseInput.value = student.course || '';
+            if (phonenoInput) phonenoInput.value = student.phoneno || '';
+            if (collegeInput) collegeInput.value = student.college || '';
+            if (departmentInput) departmentInput.value = student.department || '';
             
             const modal = document.getElementById('studentModal');
             if (modal) {
@@ -447,11 +500,15 @@ function filterStudents(searchTerm) {
         
         const name = student.name ? student.name.toLowerCase() : '';
         const email = student.email ? student.email.toLowerCase() : '';
-        const course = student.course ? student.course.toLowerCase() : '';
+        const phoneno = student.phoneno ? student.phoneno.toLowerCase() : '';
+        const college = student.college ? student.college.toLowerCase() : '';
+        const department = student.department ? student.department.toLowerCase() : '';
         
         if (name.indexOf(searchTerm) !== -1 || 
             email.indexOf(searchTerm) !== -1 || 
-            course.indexOf(searchTerm) !== -1) {
+            phoneno.indexOf(searchTerm) !== -1 ||
+            college.indexOf(searchTerm) !== -1 ||
+            department.indexOf(searchTerm) !== -1) {
             filtered.push(student);
         }
     }
@@ -491,13 +548,17 @@ function resetForm() {
     const nameInput = document.getElementById('student-name');
     const emailInput = document.getElementById('student-email');
     const ageInput = document.getElementById('student-age');
-    const courseInput = document.getElementById('student-course');
+    const phonenoInput = document.getElementById('student-phoneno');
+    const collegeInput = document.getElementById('student-college');
+    const departmentInput = document.getElementById('student-department');
     
     if (idInput) idInput.value = '';
     if (nameInput) nameInput.value = '';
     if (emailInput) emailInput.value = '';
     if (ageInput) ageInput.value = '';
-    if (courseInput) courseInput.value = '';
+    if (phonenoInput) phonenoInput.value = '';
+    if (collegeInput) collegeInput.value = '';
+    if (departmentInput) departmentInput.value = '';
 }
 
 function showError(message) {
