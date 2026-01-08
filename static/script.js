@@ -82,23 +82,42 @@ function setupModalControls() {
 }
 
 function loadDropdownData() {
-    fetch('/api/colleges')
+    fetch('/api/states')
         .then(function(response) {
             return response.json();
         })
-        .then(function(colleges) {
-            const collegeSelect = document.getElementById('student-college');
-            if (collegeSelect) {
-                colleges.forEach(function(college) {
+        .then(function(states) {
+            const stateSelect = document.getElementById('student-state');
+            if (stateSelect) {
+                states.forEach(function(state) {
                     const option = document.createElement('option');
-                    option.value = college;
-                    option.textContent = college;
-                    collegeSelect.appendChild(option);
+                    option.value = state;
+                    option.textContent = state;
+                    stateSelect.appendChild(option);
+                });
+                
+                stateSelect.addEventListener('change', function() {
+                    const selectedState = this.value;
+                    const citySelect = document.getElementById('student-city');
+                    const collegeSelect = document.getElementById('student-college');
+                    
+                    if (selectedState) {
+                        loadCities(selectedState);
+                    } else {
+                        if (citySelect) {
+                            citySelect.innerHTML = '<option value="">Select City...</option>';
+                            citySelect.disabled = true;
+                        }
+                        if (collegeSelect) {
+                            collegeSelect.innerHTML = '<option value="">Select College...</option>';
+                            collegeSelect.disabled = true;
+                        }
+                    }
                 });
             }
         })
         .catch(function(error) {
-            console.error('Error loading colleges:', error);
+            console.error('Error loading states:', error);
         });
     
     fetch('/api/departments')
@@ -119,6 +138,114 @@ function loadDropdownData() {
         .catch(function(error) {
             console.error('Error loading departments:', error);
         });
+    
+    const citySelect = document.getElementById('student-city');
+    const collegeSelect = document.getElementById('student-college');
+    if (citySelect) citySelect.disabled = true;
+    if (collegeSelect) collegeSelect.disabled = true;
+}
+
+function loadCities(state) {
+    const citySelect = document.getElementById('student-city');
+    const collegeSelect = document.getElementById('student-college');
+    
+    if (!citySelect) return;
+    
+    citySelect.innerHTML = '<option value="">Select City...</option>';
+    if (collegeSelect) {
+        collegeSelect.innerHTML = '<option value="">Select College...</option>';
+        collegeSelect.disabled = true;
+    }
+    
+    if (!state) {
+        citySelect.disabled = true;
+        return;
+    }
+    
+    citySelect.disabled = true;
+    
+    fetch('/api/cities?state=' + encodeURIComponent(state))
+        .then(function(response) {
+            return response.json();
+        })
+        .then(function(cities) {
+            cities.forEach(function(city) {
+                const option = document.createElement('option');
+                option.value = city;
+                option.textContent = city;
+                citySelect.appendChild(option);
+            });
+            
+            citySelect.disabled = false;
+            
+            const existingListener = citySelect.getAttribute('data-listener');
+            if (!existingListener) {
+                citySelect.setAttribute('data-listener', 'true');
+                citySelect.addEventListener('change', function() {
+                    const selectedCity = this.value;
+                    const stateSelect = document.getElementById('student-state');
+                    const selectedState = stateSelect ? stateSelect.value : '';
+                    
+                    if (selectedCity && selectedState) {
+                        loadColleges(selectedState, selectedCity);
+                    } else {
+                        if (collegeSelect) {
+                            collegeSelect.innerHTML = '<option value="">Select College...</option>';
+                            collegeSelect.disabled = true;
+                        }
+                    }
+                });
+            }
+        })
+        .catch(function(error) {
+            console.error('Error loading cities:', error);
+            citySelect.disabled = false;
+        });
+}
+
+function loadColleges(state, city) {
+    const collegeSelect = document.getElementById('student-college');
+    if (!collegeSelect) return;
+    
+    collegeSelect.innerHTML = '<option value="">Loading colleges...</option>';
+    collegeSelect.disabled = true;
+    
+    if (!state || !city) {
+        collegeSelect.innerHTML = '<option value="">Select College...</option>';
+        return;
+    }
+    
+    let url = '/api/colleges?state=' + encodeURIComponent(state) + '&city=' + encodeURIComponent(city);
+    
+    fetch(url)
+        .then(function(response) {
+            return response.json();
+        })
+        .then(function(colleges) {
+            collegeSelect.innerHTML = '<option value="">Select College...</option>';
+            
+            if (colleges.length === 0) {
+                const option = document.createElement('option');
+                option.value = '';
+                option.textContent = 'No colleges found in this city';
+                option.disabled = true;
+                collegeSelect.appendChild(option);
+            } else {
+                colleges.forEach(function(college) {
+                    const option = document.createElement('option');
+                    option.value = college;
+                    option.textContent = college;
+                    collegeSelect.appendChild(option);
+                });
+            }
+            
+            collegeSelect.disabled = false;
+        })
+        .catch(function(error) {
+            console.error('Error loading colleges:', error);
+            collegeSelect.innerHTML = '<option value="">Error loading colleges</option>';
+            collegeSelect.disabled = false;
+        });
 }
 
 function setupFormValidation() {
@@ -135,6 +262,8 @@ function setupFormValidation() {
         const emailInput = document.getElementById('student-email');
         const ageInput = document.getElementById('student-age');
         const phonenoInput = document.getElementById('student-phoneno');
+        const stateInput = document.getElementById('student-state');
+        const cityInput = document.getElementById('student-city');
         const collegeInput = document.getElementById('student-college');
         const departmentInput = document.getElementById('student-department');
         
@@ -142,6 +271,8 @@ function setupFormValidation() {
         const email = emailInput.value.trim();
         const age = ageInput.value;
         const phoneno = phonenoInput.value.trim();
+        const state = stateInput.value;
+        const city = cityInput.value;
         const college = collegeInput.value;
         const department = departmentInput.value;
         
@@ -155,6 +286,8 @@ function setupFormValidation() {
             email: email || null,
             age: age ? parseInt(age) : null,
             phoneno: phoneno || null,
+            state: state || null,
+            city: city || null,
             college: college || null,
             department: department || null
         };
@@ -395,6 +528,8 @@ function editStudent(id) {
             const emailInput = document.getElementById('student-email');
             const ageInput = document.getElementById('student-age');
             const phonenoInput = document.getElementById('student-phoneno');
+            const stateInput = document.getElementById('student-state');
+            const cityInput = document.getElementById('student-city');
             const collegeInput = document.getElementById('student-college');
             const departmentInput = document.getElementById('student-department');
             
@@ -403,7 +538,21 @@ function editStudent(id) {
             if (emailInput) emailInput.value = student.email || '';
             if (ageInput) ageInput.value = student.age || '';
             if (phonenoInput) phonenoInput.value = student.phoneno || '';
-            if (collegeInput) collegeInput.value = student.college || '';
+            if (stateInput) {
+                stateInput.value = student.state || '';
+                if (student.state) {
+                    loadCities(student.state);
+                }
+            }
+            if (cityInput) cityInput.value = student.city || '';
+            if (collegeInput) {
+                if (student.state) {
+                    loadColleges(student.state, student.city || '');
+                }
+                setTimeout(function() {
+                    collegeInput.value = student.college || '';
+                }, 500);
+            }
             if (departmentInput) departmentInput.value = student.department || '';
             
             const modal = document.getElementById('studentModal');
@@ -549,6 +698,8 @@ function resetForm() {
     const emailInput = document.getElementById('student-email');
     const ageInput = document.getElementById('student-age');
     const phonenoInput = document.getElementById('student-phoneno');
+    const stateInput = document.getElementById('student-state');
+    const cityInput = document.getElementById('student-city');
     const collegeInput = document.getElementById('student-college');
     const departmentInput = document.getElementById('student-department');
     
@@ -557,7 +708,15 @@ function resetForm() {
     if (emailInput) emailInput.value = '';
     if (ageInput) ageInput.value = '';
     if (phonenoInput) phonenoInput.value = '';
-    if (collegeInput) collegeInput.value = '';
+    if (stateInput) stateInput.value = '';
+    if (cityInput) {
+        cityInput.value = '';
+        cityInput.innerHTML = '<option value="">Select City...</option>';
+    }
+    if (collegeInput) {
+        collegeInput.value = '';
+        collegeInput.innerHTML = '<option value="">Select College...</option>';
+    }
     if (departmentInput) departmentInput.value = '';
 }
 

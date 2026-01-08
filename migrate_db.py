@@ -22,6 +22,8 @@ try:
 
         # Add new columns
         "ALTER TABLE student ADD COLUMN phoneno VARCHAR(15)",
+        "ALTER TABLE student ADD COLUMN state VARCHAR(100)",
+        "ALTER TABLE student ADD COLUMN city VARCHAR(100)",
         "ALTER TABLE student ADD COLUMN college VARCHAR(200)",
         "ALTER TABLE student ADD COLUMN department VARCHAR(100)"
     ]
