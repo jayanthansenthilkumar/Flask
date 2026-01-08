@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - Student Management System</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
@@ -129,97 +129,6 @@
         </div>
     </div>
 
-    <script>
-        // User dropdown toggle
-        document.getElementById('userDropdownBtn').addEventListener('click', function(e) {
-            e.stopPropagation();
-            document.getElementById('userDropdownMenu').classList.toggle('show');
-        });
-
-        // Close dropdown when clicking outside
-        document.addEventListener('click', function(e) {
-            const dropdown = document.getElementById('userDropdownMenu');
-            if (dropdown.classList.contains('show')) {
-                dropdown.classList.remove('show');
-            }
-        });
-
-        // Menu toggle for mobile
-        const menuToggle = document.getElementById('menu-toggle');
-        const sidebar = document.querySelector('.sidebar');
-        
-        menuToggle.addEventListener('click', () => {
-            sidebar.classList.toggle('active');
-        });
-
-        // Load dashboard data
-        async function loadDashboardData() {
-            document.getElementById('loading').style.display = 'block';
-            try {
-                const response = await fetch('/api/students');
-                if (!response.ok) throw new Error('Failed to load students');
-                
-                const students = await response.json();
-                updateStats(students);
-                displayRecentStudents(students.slice(-5).reverse());
-            } catch (error) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error!',
-                    text: 'Error loading dashboard data: ' + error.message,
-                    confirmButtonColor: '#3b82f6'
-                });
-            } finally {
-                document.getElementById('loading').style.display = 'none';
-            }
-        }
-
-        function updateStats(students) {
-            const totalStudents = students.length;
-            const activeStudents = totalStudents;
-            
-            const courses = new Set(students.filter(s => s.course).map(s => s.course));
-            const totalCourses = courses.size;
-            
-            const ages = students.filter(s => s.age).map(s => s.age);
-            const avgAge = ages.length > 0 ? Math.round(ages.reduce((a, b) => a + b, 0) / ages.length) : 0;
-            
-            document.getElementById('total-students').textContent = totalStudents;
-            document.getElementById('active-students').textContent = activeStudents;
-            document.getElementById('total-courses').textContent = totalCourses;
-            document.getElementById('avg-age').textContent = avgAge;
-        }
-
-        function displayRecentStudents(students) {
-            const tbody = document.getElementById('recent-students-body');
-            const noStudents = document.getElementById('no-students');
-            
-            if (students.length === 0) {
-                tbody.innerHTML = '';
-                noStudents.style.display = 'block';
-                return;
-            }
-
-            noStudents.style.display = 'none';
-            tbody.innerHTML = students.map(student => `
-                <tr>
-                    <td>${student.id}</td>
-                    <td>${escapeHtml(student.name)}</td>
-                    <td>${escapeHtml(student.email) || '-'}</td>
-                    <td>${escapeHtml(student.course) || '-'}</td>
-                </tr>
-            `).join('');
-        }
-
-        function escapeHtml(text) {
-            if (!text) return '';
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
-
-        // Load dashboard data on page load
-        document.addEventListener('DOMContentLoaded', loadDashboardData);
-    </script>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>

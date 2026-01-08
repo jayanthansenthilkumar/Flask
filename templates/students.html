@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Students - Student Management System</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
@@ -144,68 +144,6 @@
         </div>
     </div>
 
-    <script src="{{ url_for('static', filename='students.js') }}"></script>
-    <script>
-        // Modal controls
-        const modal = document.getElementById('studentModal');
-        const openModalBtn = document.getElementById('openModalBtn');
-        const closeModalBtn = document.getElementById('closeModalBtn');
-        const cancelBtn = document.getElementById('cancel-btn');
-
-        openModalBtn.addEventListener('click', () => {
-            modal.classList.add('show');
-        });
-
-        closeModalBtn.addEventListener('click', () => {
-            modal.classList.remove('show');
-            if (typeof resetForm === 'function') {
-                resetForm();
-            }
-        });
-
-        cancelBtn.addEventListener('click', () => {
-            modal.classList.remove('show');
-            if (typeof resetForm === 'function') {
-                resetForm();
-            }
-        });
-
-        // Close modal when clicking outside
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) {
-                modal.classList.remove('show');
-                if (typeof resetForm === 'function') {
-                    resetForm();
-                }
-            }
-        });
-
-        // User dropdown toggle
-        document.getElementById('userDropdownBtn').addEventListener('click', function(e) {
-            e.stopPropagation();
-            document.getElementById('userDropdownMenu').classList.toggle('show');
-        });
-
-        // Close dropdown when clicking outside
-        document.addEventListener('click', function(e) {
-            const dropdown = document.getElementById('userDropdownMenu');
-            if (dropdown.classList.contains('show')) {
-                dropdown.classList.remove('show');
-            }
-        });
-
-        // Menu toggle for mobile
-        const menuToggle = document.getElementById('menu-toggle');
-        const sidebar = document.querySelector('.sidebar');
-        
-        menuToggle.addEventListener('click', () => {
-            sidebar.classList.toggle('active');
-        });
-
-        // Open modal for editing
-        function openEditModal() {
-            modal.classList.add('show');
-        }
-    </script>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>
