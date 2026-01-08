@@ -33,6 +33,8 @@ DEPARTMENTS = [
     "Rubber Technology",
     "Leather Technology",
     # Computer / IT Specializations
+    "Artificial Intelligence and Machine Learning",
+    "Artificial Intelligence and Data Science",
     "Computer Engineering",
     "Software Engineering",
     "Computer Science and Design",
