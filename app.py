@@ -2,10 +2,7 @@
 
 from flask import Flask, render_template, request, jsonify
 import mysql.connector
-from states import STATES
-from cities import CITIES_BY_STATE
-from colleges import COLLEGES
-from departments import DEPARTMENTS, DEPARTMENT_SHORT_NAMES
+from data import STATES, CITIES_BY_STATE, COLLEGES, DEPARTMENTS, DEPARTMENT_SHORT_NAMES
 
 app = Flask(__name__)
 
