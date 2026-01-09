@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Dashboard - Student Management System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="logo">
+            <h2><i class="ri-graduation-cap-fill"></i> SMS</h2>
+            <p>Student Portal</p>
+        </div>
+        <nav class="nav-menu">
+            <a href="/studentDashboard" class="nav-item active">
+                <i class="ri-dashboard-line"></i>
+                <span class="text">Dashboard</span>
+            </a>
+            <a href="/students" class="nav-item">
+                <i class="ri-group-line"></i>
+                <span class="text">View Students</span>
+            </a>
+        </nav>
+        <div class="sidebar-footer">
+            <p>Version 1.0.0</p>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <button class="menu-toggle" id="menu-toggle">
+                    <i class="ri-menu-line"></i>
+                </button>
+                <h1>Student Dashboard</h1>
+            </div>
+            <div class="header-right">
+                <div class="user-dropdown">
+                    <button class="user-profile" id="userDropdownBtn">
+                        <span class="user-name">Student</span>
+                        <div class="user-avatar"><i class="ri-user-line"></i></div>
+                        <i class="ri-arrow-down-s-line dropdown-icon"></i>
+                    </button>
+                    <div class="dropdown-menu" id="userDropdownMenu">
+                        <a href="#" class="dropdown-item"><i class="ri-user-line"></i> Profile</a>
+                        <a href="#" class="dropdown-item"><i class="ri-settings-3-line"></i> Settings</a>
+                        <div class="dropdown-divider"></div>
+                        <a href="/logout" class="dropdown-item"><i class="ri-logout-box-line"></i> Logout</a>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Page Content -->
+        <div class="page-content">
+            <!-- Welcome Banner -->
+            <div class="welcome-banner" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 15px; margin-bottom: 30px; color: white;">
+                <h2 style="margin-bottom: 10px;"><i class="ri-emotion-happy-line"></i> Welcome to Student Portal!</h2>
+                <p style="opacity: 0.9;">View and explore student information in the system</p>
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon blue">
+                        <i class="ri-group-line"></i>
+                    </div>
+                    <div class="stat-content">
+                        <p class="stat-label">Total Students</p>
+                        <h3 class="stat-value" id="total-students">0</h3>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon green">
+                        <i class="ri-book-open-line"></i>
+                    </div>
+                    <div class="stat-content">
+                        <p class="stat-label">Active Programs</p>
+                        <h3 class="stat-value" id="active-programs">0</h3>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon orange">
+                        <i class="ri-building-line"></i>
+                    </div>
+                    <div class="stat-content">
+                        <p class="stat-label">Total Colleges</p>
+                        <h3 class="stat-value" id="total-colleges">0</h3>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon purple">
+                        <i class="ri-map-pin-line"></i>
+                    </div>
+                    <div class="stat-content">
+                        <p class="stat-label">Total States</p>
+                        <h3 class="stat-value" id="total-states">0</h3>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Access Cards -->
+            <div class="quick-access" style="margin-top: 30px;">
+                <h3 style="margin-bottom: 20px; color: #333;">Quick Access</h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+                    <a href="/students" class="quick-card" style="text-decoration: none; color: inherit;">
+                        <div class="stat-card" style="cursor: pointer; transition: transform 0.3s;">
+                            <div style="text-align: center; padding: 20px;">
+                                <i class="ri-group-line" style="font-size: 48px; color: #667eea; margin-bottom: 15px;"></i>
+                                <h4>View All Students</h4>
+                                <p style="color: #666; font-size: 14px; margin-top: 8px;">Browse student records</p>
+                            </div>
+                        </div>
+                    </a>
+
+                    <div class="quick-card" style="text-decoration: none; color: inherit;">
+                        <div class="stat-card">
+                            <div style="text-align: center; padding: 20px;">
+                                <i class="ri-file-list-line" style="font-size: 48px; color: #10b981; margin-bottom: 15px;"></i>
+                                <h4>My Records</h4>
+                                <p style="color: #666; font-size: 14px; margin-top: 8px;">View your information</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="quick-card" style="text-decoration: none; color: inherit;">
+                        <div class="stat-card">
+                            <div style="text-align: center; padding: 20px;">
+                                <i class="ri-calendar-line" style="font-size: 48px; color: #f59e0b; margin-bottom: 15px;"></i>
+                                <h4>Schedule</h4>
+                                <p style="color: #666; font-size: 14px; margin-top: 8px;">View your schedule</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Menu toggle functionality
+        const menuToggle = document.getElementById('menu-toggle');
+        const sidebar = document.querySelector('.sidebar');
+
+        menuToggle.addEventListener('click', () => {
+            sidebar.classList.toggle('collapsed');
+        });
+
+        // User dropdown functionality
+        const userDropdownBtn = document.getElementById('userDropdownBtn');
+        const userDropdownMenu = document.getElementById('userDropdownMenu');
+
+        userDropdownBtn.addEventListener('click', () => {
+            userDropdownMenu.classList.toggle('show');
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.user-dropdown')) {
+                userDropdownMenu.classList.remove('show');
+            }
+        });
+
+        // Load dashboard statistics
+        async function loadStats() {
+            try {
+                // Fetch students data
+                const studentsResponse = await fetch('/api/students');
+                if (studentsResponse.ok) {
+                    const students = await studentsResponse.json();
+                    document.getElementById('total-students').textContent = students.length;
+
+                    // Count unique colleges
+                    const uniqueColleges = new Set(students.map(s => s.college).filter(c => c));
+                    document.getElementById('total-colleges').textContent = uniqueColleges.size;
+
+                    // Count unique departments (programs)
+                    const uniqueDepartments = new Set(students.map(s => s.department).filter(d => d));
+                    document.getElementById('active-programs').textContent = uniqueDepartments.size;
+
+                    // Count unique states
+                    const uniqueStates = new Set(students.map(s => s.state).filter(s => s));
+                    document.getElementById('total-states').textContent = uniqueStates.size;
+                }
+            } catch (error) {
+                console.error('Error loading statistics:', error);
+            }
+        }
+
+        // Load stats on page load
+        loadStats();
+
+        // Add hover effect to quick cards
+        document.querySelectorAll('.quick-card .stat-card').forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-5px)';
+                this.style.boxShadow = '0 10px 25px rgba(0,0,0,0.15)';
+            });
+            card.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0)';
+                this.style.boxShadow = '';
+            });
+        });
+    </script>
+</body>
+</html>

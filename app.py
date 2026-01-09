@@ -1,9 +1,10 @@
 # STUDENT MANAGEMENT SYSTEM - Flask Application for CRUD Operations
 
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, session, redirect, url_for
 import mysql.connector
 
 app = Flask(__name__)
+app.secret_key = 'your-secret-key-here-change-in-production'  # Change this in production
 
 DB_HOST = 'localhost'
 DB_USER = 'root'
@@ -61,8 +62,70 @@ def init_db():
 def home():
     return render_template('index.html')
 
+@app.route('/login')
+def login_page():
+    return render_template('login.html')
+
+@app.route('/api/login', methods=['POST'])
+def login():
+    data = request.get_json()
+    
+    if not data or 'username' not in data or 'password' not in data:
+        return jsonify({"error": "Username and password are required"}), 400
+    
+    username = data['username'].strip()
+    password = data['password']
+    
+    connection = get_db_connection()
+    if not connection:
+        return jsonify({"error": "Database connection failed"}), 500
+    
+    try:
+        cursor = connection.cursor()
+        cursor.execute("SELECT id, username, role FROM users WHERE username = %s AND password = %s", 
+                      (username, password))
+        user = cursor.fetchone()
+        
+        cursor.close()
+        connection.close()
+        
+        if user:
+            session['user_id'] = user[0]
+            session['username'] = user[1]
+            session['role'] = user[2]
+            
+            if user[2] == 'admin':
+                return jsonify({"success": True, "role": "admin", "redirect": "/adminDashboard"}), 200
+            else:
+                return jsonify({"success": True, "role": "student", "redirect": "/studentDashboard"}), 200
+        else:
+            return jsonify({"error": "Invalid username or password"}), 401
+    except Exception as error:
+        if connection:
+            connection.close()
+        return jsonify({"error": str(error)}), 500
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('home'))
+
+@app.route('/adminDashboard')
+def admin_dashboard():
+    if 'user_id' not in session or session.get('role') != 'admin':
+        return redirect(url_for('login_page'))
+    return render_template('adminDashboard.html')
+
+@app.route('/studentDashboard')
+def student_dashboard():
+    if 'user_id' not in session or session.get('role') != 'student':
+        return redirect(url_for('login_page'))
+    return render_template('studentDashboard.html')
+
 @app.route('/students')
 def students():
+    if 'user_id' not in session:
+        return redirect(url_for('login_page'))
     return render_template('students.html')
 
 @app.route('/api/health')

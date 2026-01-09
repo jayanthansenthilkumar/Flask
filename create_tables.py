@@ -18,6 +18,19 @@ def create_tables():
 
         print("🚀 Creating database tables...")
 
+        # Create users table for authentication
+        create_users_table = """
+            CREATE TABLE IF NOT EXISTS users (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                username VARCHAR(50) NOT NULL UNIQUE,
+                password VARCHAR(255) NOT NULL,
+                role VARCHAR(20) NOT NULL DEFAULT 'student',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """
+        cursor.execute(create_users_table)
+        print("✓ Users table created")
+
         # Create states table
         create_states_table = """
             CREATE TABLE IF NOT EXISTS states (
@@ -138,6 +151,26 @@ def populate_tables():
         cursor = connection.cursor()
 
         print("\n🌱 Populating database with initial data...")
+
+        # Insert default users
+        print("\n👤 Inserting default users...")
+        default_users = [
+            ('subiksha', 'admin123', 'admin'),
+            ('suji', 'suji123', 'student')
+        ]
+        user_count = 0
+        for username, password, role in default_users:
+            try:
+                cursor.execute(
+                    "INSERT INTO users (username, password, role) VALUES (%s, %s, %s)",
+                    (username, password, role)
+                )
+                user_count += 1
+            except mysql.connector.IntegrityError:
+                pass  # User already exists
+        
+        connection.commit()
+        print(f"  ✓ Inserted {user_count} default users (admin/admin123, student/student123)")
 
         # Insert states
         print("\n📍 Inserting states...")
