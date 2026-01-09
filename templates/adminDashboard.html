@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - Student Management System</title>
+    <title>Dashboard - Documentary Locker</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -12,21 +12,21 @@
     <!-- Sidebar -->
     <div class="sidebar">
         <div class="logo">
-            <h2><i class="ri-graduation-cap-fill"></i> SMS</h2>
-            <p>Student Management</p>
+            <h2><i class="ri-folder-shield-fill"></i> Locker</h2>
+            <p>Paper Storage</p>
         </div>
         <nav class="nav-menu">
             <a href="/adminDashboard" class="nav-item active">
                 <i class="ri-dashboard-line"></i>
                 <span class="text">Dashboard</span>
             </a>
-            <a href="/students" class="nav-item">
-                <i class="ri-group-line"></i>
-                <span class="text">Students</span>
+            <a href="/papers" class="nav-item">
+                <i class="ri-file-text-line"></i>
+                <span class="text">Question Papers</span>
             </a>
         </nav>
         <div class="sidebar-footer">
-            <p>Version 1.0.0</p>
+            <p>Version 2.0.0</p>
         </div>
     </div>
 
@@ -38,19 +38,16 @@
                 <button class="menu-toggle" id="menu-toggle">
                     <i class="ri-menu-line"></i>
                 </button>
-                <h1>Dashboard</h1>
+                <h1>Admin Dashboard</h1>
             </div>
             <div class="header-right">
                 <div class="user-dropdown">
                     <button class="user-profile" id="userDropdownBtn">
-                        <span class="user-name">Admin</span>
-                        <div class="user-avatar"><img src="{{ url_for('static', filename='../thango.jpg') }}" alt="Thango"></div>
+                        <span class="user-name">{{ username }}</span>
+                        <div class="user-avatar"><i class="ri-user-star-line"></i></div>
                         <i class="ri-arrow-down-s-line dropdown-icon"></i>
                     </button>
                     <div class="dropdown-menu" id="userDropdownMenu">
-                        <a href="#" class="dropdown-item"><i class="ri-user-line"></i> Profile</a>
-                        <a href="#" class="dropdown-item"><i class="ri-settings-3-line"></i> Settings</a>
-                        <div class="dropdown-divider"></div>
                         <a href="/logout" class="dropdown-item"><i class="ri-logout-box-line"></i> Logout</a>
                     </div>
                 </div>
@@ -63,73 +60,145 @@
             <div class="stats-grid">
                 <div class="stat-card">
                     <div class="stat-icon blue">
-                        <i class="ri-group-line"></i>
+                        <i class="ri-file-text-line"></i>
                     </div>
                     <div class="stat-content">
-                        <p class="stat-label">Total Students</p>
-                        <h3 class="stat-value" id="total-students">0</h3>
+                        <p class="stat-label">Total Papers</p>
+                        <h3 class="stat-value" id="total-papers">-</h3>
                     </div>
                 </div>
 
                 <div class="stat-card">
                     <div class="stat-icon green">
-                        <i class="ri-checkbox-circle-line"></i>
+                        <i class="ri-book-2-line"></i>
                     </div>
                     <div class="stat-content">
-                        <p class="stat-label">Active Students</p>
-                        <h3 class="stat-value" id="active-students">0</h3>
-                    </div>
-                </div>
-
-                <div class="stat-card">
-                    <div class="stat-icon orange">
-                        <i class="ri-building-line"></i>
-                    </div>
-                    <div class="stat-content">
-                        <p class="stat-label">Total Colleges</p>
-                        <h3 class="stat-value" id="total-colleges">0</h3>
+                        <p class="stat-label">Total Subjects</p>
+                        <h3 class="stat-value" id="total-subjects">-</h3>
                     </div>
                 </div>
 
                 <div class="stat-card">
                     <div class="stat-icon purple">
-                        <i class="ri-bar-chart-line"></i>
+                        <i class="ri-calendar-event-line"></i>
                     </div>
                     <div class="stat-content">
-                        <p class="stat-label">Avg Age</p>
-                        <h3 class="stat-value" id="avg-age">0</h3>
+                        <p class="stat-label">Academic Years</p>
+                        <h3 class="stat-value" id="total-years">-</h3>
                     </div>
                 </div>
             </div>
 
-            <!-- Recent Students -->
+            <!-- Recent Papers -->
             <div class="card">
                 <div class="card-header">
-                    <h3>Recent Students</h3>
-                    <a href="/students" class="view-all">View All <i class="ri-arrow-right-line"></i></a>
+                    <h3><i class="ri-time-line"></i> Recently Added Papers</h3>
+                    <a href="/papers" class="view-all">View All <i class="ri-arrow-right-line"></i></a>
                 </div>
                 <div class="card-body">
-                    <div id="loading" class="loading" style="display: none;">Loading...</div>
-                    <table class="data-table" id="recent-students-table">
+                    <table class="data-table" id="recent-papers-table">
                         <thead>
                             <tr>
-                                <th>ID</th>
-                                <th>Name</th>
-                                <th>Email</th>
-                                <th>Phone</th>
-                                <th>College</th>
+                                <th>Title</th>
+                                <th>Department</th>
+                                <th>Subject</th>
+                                <th>Year</th>
+                                <th>Action</th>
                             </tr>
                         </thead>
-                        <tbody id="recent-students-body">
-                            <!-- Recent students will be loaded here -->
+                        <tbody id="recent-papers-body">
+                            <!-- Populated by JS -->
                         </tbody>
                     </table>
-                    <p id="no-students" class="no-data" style="display: none;">No students found.</p>
+                    <p id="no-papers-msg" class="no-data" style="display: none;">No papers found.</p>
                 </div>
             </div>
         </div>
     </div>
 
-    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            loadStats();
+            loadRecentPapers();
+            setupMenu();
+        });
+
+        function setupMenu() {
+            // Mobile Menu Toggle
+            const toggle = document.getElementById('menu-toggle');
+            const sidebar = document.querySelector('.sidebar');
+            if(toggle && sidebar) {
+                toggle.addEventListener('click', () => {
+                    sidebar.classList.toggle('active');
+                });
+            }
+
+            // User Dropdown
+            const userBtn = document.getElementById('userDropdownBtn');
+            const userMenu = document.getElementById('userDropdownMenu');
+            if(userBtn && userMenu) {
+                userBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    userMenu.classList.toggle('show');
+                });
+                document.addEventListener('click', () => {
+                   userMenu.classList.remove('show');
+                });
+            }
+        }
+
+        async function loadStats() {
+            try {
+                const res = await fetch('/api/dashboard/stats');
+                const data = await res.json();
+                
+                if (res.ok) {
+                    document.getElementById('total-papers').textContent = data.total_papers;
+                    document.getElementById('total-subjects').textContent = data.total_subjects;
+                    document.getElementById('total-years').textContent = data.total_years;
+                }
+            } catch (err) {
+                console.error('Error loading stats:', err);
+            }
+        }
+
+        async function loadRecentPapers() {
+            try {
+                // Determine fetch url carefully since we don't have a specific recent endpoint, 
+                // we'll fetch all (sorted by desc date in backend) and slice top 5
+                const res = await fetch('/api/papers');
+                const papers = await res.json();
+                
+                if (res.ok) {
+                    const tbody = document.getElementById('recent-papers-body');
+                    tbody.innerHTML = '';
+                    
+                    if (papers.length === 0) {
+                        document.getElementById('no-papers-msg').style.display = 'block';
+                        return;
+                    }
+
+                    // Taking top 5
+                    papers.slice(0, 5).forEach(paper => {
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td>${paper.title}</td>
+                            <td>${paper.department}</td>
+                            <td>${paper.subject}</td>
+                            <td>${paper.year}</td>
+                            <td>
+                                <a href="${paper.link}" target="_blank" class="btn-icon view" title="View Document">
+                                    <i class="ri-eye-line"></i>
+                                </a>
+                            </td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+                }
+            } catch (err) {
+                console.error('Error loading recent papers:', err);
+            }
+        }
+    </script>
 </body>
 </html>

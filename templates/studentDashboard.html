@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student Dashboard - Student Management System</title>
+    <title>Dashboard - Documentary Locker</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -12,21 +12,21 @@
     <!-- Sidebar -->
     <div class="sidebar">
         <div class="logo">
-            <h2><i class="ri-graduation-cap-fill"></i> SMS</h2>
-            <p>Student Portal</p>
+            <h2><i class="ri-folder-shield-fill"></i> Locker</h2>
+            <p>Paper Storage</p>
         </div>
         <nav class="nav-menu">
             <a href="/studentDashboard" class="nav-item active">
                 <i class="ri-dashboard-line"></i>
                 <span class="text">Dashboard</span>
             </a>
-            <a href="/students" class="nav-item">
-                <i class="ri-group-line"></i>
-                <span class="text">View Students</span>
+            <a href="/papers" class="nav-item">
+                <i class="ri-file-text-line"></i>
+                <span class="text">Question Papers</span>
             </a>
         </nav>
         <div class="sidebar-footer">
-            <p>Version 1.0.0</p>
+            <p>Version 2.0.0</p>
         </div>
     </div>
 
@@ -43,14 +43,11 @@
             <div class="header-right">
                 <div class="user-dropdown">
                     <button class="user-profile" id="userDropdownBtn">
-                        <span class="user-name">Student</span>
-                        <div class="user-avatar"><i class="ri-user-line"></i></div>
+                        <span class="user-name">{{ username }}</span>
+                        <div class="user-avatar"><i class="ri-user-smile-line"></i></div>
                         <i class="ri-arrow-down-s-line dropdown-icon"></i>
                     </button>
                     <div class="dropdown-menu" id="userDropdownMenu">
-                        <a href="#" class="dropdown-item"><i class="ri-user-line"></i> Profile</a>
-                        <a href="#" class="dropdown-item"><i class="ri-settings-3-line"></i> Settings</a>
-                        <div class="dropdown-divider"></div>
                         <a href="/logout" class="dropdown-item"><i class="ri-logout-box-line"></i> Logout</a>
                     </div>
                 </div>
@@ -60,156 +57,153 @@
         <!-- Page Content -->
         <div class="page-content">
             <!-- Welcome Banner -->
-            <div class="welcome-banner" style="background: #6c5ce7; padding: 30px; border-radius: 12px; margin-bottom: 30px; color: white; box-shadow: 0 2px 10px rgba(41, 128, 185, 0.2);">
-                <h2 style="margin-bottom: 10px;"><i class="ri-emotion-happy-line"></i> Welcome to Student Portal!</h2>
-                <p style="opacity: 0.9;">View and explore student information in the system</p>
+            <div class="welcome-banner" style="background: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%); padding: 30px; border-radius: 12px; margin-bottom: 30px; color: white; box-shadow: 0 4px 15px rgba(108, 92, 231, 0.2);">
+                <h2 style="margin-bottom: 10px; font-size: 24px;"><i class="ri-search-eye-line"></i> Find Your Question Papers</h2>
+                <p style="opacity: 0.95; margin-bottom: 20px;">Access past year question papers for all departments and subjects easily.</p>
+                <a href="/papers" class="btn btn-secondary" style="background: white; color: #6c5ce7; border: none; font-weight: 600;">Browse Papers</a>
             </div>
 
             <!-- Stats Cards -->
             <div class="stats-grid">
                 <div class="stat-card">
                     <div class="stat-icon blue">
-                        <i class="ri-group-line"></i>
+                        <i class="ri-file-text-line"></i>
                     </div>
                     <div class="stat-content">
-                        <p class="stat-label">Total Students</p>
-                        <h3 class="stat-value" id="total-students">0</h3>
+                        <p class="stat-label">Available Papers</p>
+                        <h3 class="stat-value" id="total-papers">-</h3>
                     </div>
                 </div>
 
                 <div class="stat-card">
                     <div class="stat-icon green">
-                        <i class="ri-book-open-line"></i>
+                        <i class="ri-book-2-line"></i>
                     </div>
                     <div class="stat-content">
-                        <p class="stat-label">Active Programs</p>
-                        <h3 class="stat-value" id="active-programs">0</h3>
-                    </div>
-                </div>
-
-                <div class="stat-card">
-                    <div class="stat-icon orange">
-                        <i class="ri-building-line"></i>
-                    </div>
-                    <div class="stat-content">
-                        <p class="stat-label">Total Colleges</p>
-                        <h3 class="stat-value" id="total-colleges">0</h3>
+                        <p class="stat-label">Subjects Covered</p>
+                        <h3 class="stat-value" id="total-subjects">-</h3>
                     </div>
                 </div>
 
                 <div class="stat-card">
                     <div class="stat-icon purple">
-                        <i class="ri-map-pin-line"></i>
+                        <i class="ri-calendar-check-line"></i>
                     </div>
                     <div class="stat-content">
-                        <p class="stat-label">Total States</p>
-                        <h3 class="stat-value" id="total-states">0</h3>
+                        <p class="stat-label">Years Archived</p>
+                        <h3 class="stat-value" id="total-years">-</h3>
                     </div>
                 </div>
             </div>
 
-            <!-- Quick Access Cards -->
-            <div class="quick-access" style="margin-top: 30px;">
-                <h3 style="margin-bottom: 20px; color: #333;">Quick Access</h3>
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
-                    <a href="/students" class="quick-card" style="text-decoration: none; color: inherit;">
-                        <div class="stat-card" style="cursor: pointer; transition: transform 0.3s;">
-                            <div style="text-align: center; padding: 20px;">
-                                <i class="ri-group-line" style="font-size: 48px; color: #6c5ce7; margin-bottom: 15px;"></i>
-                                <h4>View All Students</h4>
-                                <p style="color: #666; font-size: 14px; margin-top: 8px;">Browse student records</p>
-                            </div>
-                        </div>
-                    </a>
-
-                    <div class="quick-card" style="text-decoration: none; color: inherit;">
-                        <div class="stat-card">
-                            <div style="text-align: center; padding: 20px;">
-                                <i class="ri-file-list-line" style="font-size: 48px; color: #10b981; margin-bottom: 15px;"></i>
-                                <h4>My Records</h4>
-                                <p style="color: #666; font-size: 14px; margin-top: 8px;">View your information</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="quick-card" style="text-decoration: none; color: inherit;">
-                        <div class="stat-card">
-                            <div style="text-align: center; padding: 20px;">
-                                <i class="ri-calendar-line" style="font-size: 48px; color: #f59e0b; margin-bottom: 15px;"></i>
-                                <h4>Schedule</h4>
-                                <p style="color: #666; font-size: 14px; margin-top: 8px;">View your schedule</p>
-                            </div>
-                        </div>
-                    </div>
+            <!-- Recent Papers -->
+            <div class="card">
+                <div class="card-header">
+                    <h3><i class="ri-history-line"></i> Recently Uploaded</h3>
+                    <a href="/papers" class="view-all">View All <i class="ri-arrow-right-line"></i></a>
+                </div>
+                <div class="card-body">
+                    <table class="data-table" id="recent-papers-table">
+                        <thead>
+                            <tr>
+                                <th>Title</th>
+                                <th>Department</th>
+                                <th>Subject</th>
+                                <th>Year</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recent-papers-body">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                    <p id="no-papers-msg" class="no-data" style="display: none;">No papers found.</p>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        // Menu toggle functionality
-        const menuToggle = document.getElementById('menu-toggle');
-        const sidebar = document.querySelector('.sidebar');
-
-        menuToggle.addEventListener('click', () => {
-            sidebar.classList.toggle('collapsed');
+        document.addEventListener('DOMContentLoaded', () => {
+            loadStats();
+            loadRecentPapers();
+            setupMenu();
         });
 
-        // User dropdown functionality
-        const userDropdownBtn = document.getElementById('userDropdownBtn');
-        const userDropdownMenu = document.getElementById('userDropdownMenu');
-
-        userDropdownBtn.addEventListener('click', () => {
-            userDropdownMenu.classList.toggle('show');
-        });
-
-        // Close dropdown when clicking outside
-        document.addEventListener('click', (e) => {
-            if (!e.target.closest('.user-dropdown')) {
-                userDropdownMenu.classList.remove('show');
+        function setupMenu() {
+            // Mobile Menu Toggle
+            const toggle = document.getElementById('menu-toggle');
+            const sidebar = document.querySelector('.sidebar');
+            if(toggle && sidebar) {
+                toggle.addEventListener('click', () => {
+                    sidebar.classList.toggle('active');
+                });
             }
-        });
 
-        // Load dashboard statistics
-        async function loadStats() {
-            try {
-                // Fetch students data
-                const studentsResponse = await fetch('/api/students');
-                if (studentsResponse.ok) {
-                    const students = await studentsResponse.json();
-                    document.getElementById('total-students').textContent = students.length;
-
-                    // Count unique colleges
-                    const uniqueColleges = new Set(students.map(s => s.college).filter(c => c));
-                    document.getElementById('total-colleges').textContent = uniqueColleges.size;
-
-                    // Count unique departments (programs)
-                    const uniqueDepartments = new Set(students.map(s => s.department).filter(d => d));
-                    document.getElementById('active-programs').textContent = uniqueDepartments.size;
-
-                    // Count unique states
-                    const uniqueStates = new Set(students.map(s => s.state).filter(s => s));
-                    document.getElementById('total-states').textContent = uniqueStates.size;
-                }
-            } catch (error) {
-                console.error('Error loading statistics:', error);
+            // User Dropdown
+            const userBtn = document.getElementById('userDropdownBtn');
+            const userMenu = document.getElementById('userDropdownMenu');
+            if(userBtn && userMenu) {
+                userBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    userMenu.classList.toggle('show');
+                });
+                document.addEventListener('click', () => {
+                   userMenu.classList.remove('show');
+                });
             }
         }
 
-        // Load stats on page load
-        loadStats();
+        async function loadStats() {
+            try {
+                const res = await fetch('/api/dashboard/stats');
+                const data = await res.json();
+                
+                if (res.ok) {
+                    document.getElementById('total-papers').textContent = data.total_papers;
+                    document.getElementById('total-subjects').textContent = data.total_subjects;
+                    document.getElementById('total-years').textContent = data.total_years;
+                }
+            } catch (err) {
+                console.error('Error loading stats:', err);
+            }
+        }
 
-        // Add hover effect to quick cards
-        document.querySelectorAll('.quick-card .stat-card').forEach(card => {
-            card.addEventListener('mouseenter', function() {
-                this.style.transform = 'translateY(-5px)';
-                this.style.boxShadow = '0 10px 25px rgba(0,0,0,0.15)';
-            });
-            card.addEventListener('mouseleave', function() {
-                this.style.transform = 'translateY(0)';
-                this.style.boxShadow = '';
-            });
-        });
+        async function loadRecentPapers() {
+            try {
+                const res = await fetch('/api/papers');
+                const papers = await res.json();
+                
+                if (res.ok) {
+                    const tbody = document.getElementById('recent-papers-body');
+                    tbody.innerHTML = '';
+                    
+                    if (papers.length === 0) {
+                        document.getElementById('no-papers-msg').style.display = 'block';
+                        return;
+                    }
+
+                    // Taking top 5
+                    papers.slice(0, 5).forEach(paper => {
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td>${paper.title}</td>
+                            <td>${paper.department}</td>
+                            <td>${paper.subject}</td>
+                            <td>${paper.year}</td>
+                            <td>
+                                <a href="${paper.link}" target="_blank" class="btn-icon view" title="View Document">
+                                    <i class="ri-eye-line"></i>
+                                </a>
+                            </td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+                }
+            } catch (err) {
+                console.error('Error loading recent papers:', err);
+            }
+        }
     </script>
 </body>
 </html>

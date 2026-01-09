@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Question Papers - Documentary Locker</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="logo">
+            <h2><i class="ri-folder-shield-fill"></i> Locker</h2>
+            <p>Paper Storage</p>
+        </div>
+        <nav class="nav-menu">
+            {% if role == 'admin' %}
+            <a href="/adminDashboard" class="nav-item">
+            {% else %}
+            <a href="/studentDashboard" class="nav-item">
+            {% endif %}
+                <i class="ri-dashboard-line"></i>
+                <span class="text">Dashboard</span>
+            </a>
+            <a href="/papers" class="nav-item active">
+                <i class="ri-file-text-line"></i>
+                <span class="text">Question Papers</span>
+            </a>
+        </nav>
+        <div class="sidebar-footer">
+            <p>Version 2.0.0</p>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <header class="header">
+            <div class="header-left">
+                <h1>Question Papers</h1>
+            </div>
+            <div class="header-right">
+                <span class="user-name">Welcome, {{ username }}</span>
+                <a href="/logout" class="logout-btn"><i class="ri-logout-box-line"></i> Logout</a>
+            </div>
+        </header>
+
+        <div class="content">
+            <!-- Filters & Actions -->
+            <div class="actions-bar">
+                <div class="filters">
+                    <select id="filterDepartment" onchange="loadSubjectsFilter()">
+                        <option value="">All Departments</option>
+                    </select>
+                    <select id="filterYear">
+                        <option value="">All Years</option>
+                    </select>
+                    <select id="filterSubject">
+                        <option value="">All Subjects</option>
+                    </select>
+                    <button class="btn btn-secondary" onclick="loadPapers()">Apply Filters</button>
+                </div>
+                {% if role == 'admin' %}
+                <button class="btn btn-primary" onclick="openModal('add')">
+                    <i class="ri-add-line"></i> Add Paper
+                </button>
+                {% endif %}
+            </div>
+
+            <!-- Papers Table -->
+            <div class="table-container">
+                <table class="data-table" id="papersTable">
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Department</th>
+                            <th>Subject</th>
+                            <th>Year</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Data populated by JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Add/Edit -->
+    <div id="paperModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">Add Question Paper</h3>
+                <span class="close" onclick="closeModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="paperForm">
+                    <input type="hidden" id="paperId">
+                    <div class="form-group">
+                        <label>Title</label>
+                        <input type="text" id="paperTitle" required placeholder="e.g. End Semester Exam">
+                    </div>
+                    <div class="form-group">
+                        <label>Department</label>
+                        <select id="paperDept" required onchange="loadSubjectsForm()">
+                            <option value="">Select Department</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Subject</label>
+                        <select id="paperSubject" required>
+                            <option value="">Select Subject</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Year</label>
+                        <select id="paperYear" required>
+                            <option value="">Select Academic Year</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Document Link (URL)</label>
+                        <input type="url" id="paperLink" required placeholder="https://drive.google.com/...">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Save Paper</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '/api';
+        const USER_ROLE = '{{ role }}';
+        let allSubjects = {};
+
+        // Initialization
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadStaticData();
+            loadPapers();
+            
+            // Close modal on outside click
+            window.onclick = function(event) {
+                if (event.target == document.getElementById('paperModal')) {
+                    closeModal();
+                }
+            }
+        });
+
+        async function loadStaticData() {
+            try {
+                const response = await fetch(`${API_BASE}/static-data`);
+                const data = await response.json();
+                
+                allSubjects = data.subjects;
+                
+                // Populate Filters
+                const deptFilter = document.getElementById('filterDepartment');
+                const yearFilter = document.getElementById('filterYear');
+                const paperDept = document.getElementById('paperDept');
+                const paperYear = document.getElementById('paperYear');
+
+                data.departments.forEach(dept => {
+                    deptFilter.add(new Option(dept, dept));
+                    paperDept.add(new Option(dept, dept));
+                });
+
+                data.years.forEach(year => {
+                    yearFilter.add(new Option(year, year));
+                    paperYear.add(new Option(year, year));
+                });
+                
+            } catch (error) {
+                console.error('Error loading static data:', error);
+            }
+        }
+
+        function loadSubjectsFilter() {
+            const dept = document.getElementById('filterDepartment').value;
+            const subjectSelect = document.getElementById('filterSubject');
+            subjectSelect.innerHTML = '<option value="">All Subjects</option>';
+            
+            if (dept && allSubjects[dept]) {
+                allSubjects[dept].forEach(sub => {
+                    subjectSelect.add(new Option(sub, sub));
+                });
+            }
+        }
+
+        function loadSubjectsForm() {
+            const dept = document.getElementById('paperDept').value;
+            const subjectSelect = document.getElementById('paperSubject');
+            subjectSelect.innerHTML = '<option value="">Select Subject</option>';
+            
+            if (dept && allSubjects[dept]) {
+                allSubjects[dept].forEach(sub => {
+                    subjectSelect.add(new Option(sub, sub));
+                });
+            }
+        }
+
+        async function loadPapers() {
+            const dept = document.getElementById('filterDepartment').value;
+            const year = document.getElementById('filterYear').value;
+            const subject = document.getElementById('filterSubject').value;
+
+            const params = new URLSearchParams();
+            if (dept) params.append('department', dept);
+            if (year) params.append('year', year);
+            if (subject) params.append('subject', subject);
+
+            try {
+                const response = await fetch(`${API_BASE}/papers?${params.toString()}`);
+                const papers = await response.json();
+                
+                const tbody = document.querySelector('#papersTable tbody');
+                tbody.innerHTML = '';
+
+                papers.forEach(paper => {
+                    const tr = document.createElement('tr');
+                    let actions = `
+                        <a href="${paper.link}" target="_blank" class="btn-icon view" title="View Document"><i class="ri-eye-line"></i></a>
+                    `;
+                    
+                    if (USER_ROLE === 'admin') {
+                        actions += `
+                            <button onclick="editPaper(${paper.id}, '${paper.title}', '${paper.department}', '${paper.subject}', '${paper.year}', '${paper.link}')" class="btn-icon edit" title="Edit"><i class="ri-pencil-line"></i></button>
+                            <button onclick="deletePaper(${paper.id})" class="btn-icon delete" title="Delete"><i class="ri-delete-bin-line"></i></button>
+                        `;
+                    }
+
+                    tr.innerHTML = `
+                        <td>${paper.title}</td>
+                        <td>${paper.department}</td>
+                        <td>${paper.subject}</td>
+                        <td>${paper.year}</td>
+                        <td><div class="action-buttons">${actions}</div></td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } catch (error) {
+                console.error('Error loading papers:', error);
+            }
+        }
+
+        // Modal Functions
+        function openModal(mode) {
+            document.getElementById('paperModal').style.display = 'block';
+            if (mode === 'add') {
+                document.getElementById('modalTitle').innerText = 'Add Question Paper';
+                document.getElementById('paperForm').reset();
+                document.getElementById('paperId').value = '';
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('paperModal').style.display = 'none';
+        }
+
+        // Edit Paper
+        window.editPaper = function(id, title, dept, subject, year, link) {
+            openModal('edit');
+            document.getElementById('modalTitle').innerText = 'Edit Question Paper';
+            document.getElementById('paperId').value = id;
+            document.getElementById('paperTitle').value = title;
+            document.getElementById('paperDept').value = dept;
+            loadSubjectsForm(); // Load subjects for the selected dept
+            document.getElementById('paperSubject').value = subject;
+            document.getElementById('paperYear').value = year;
+            document.getElementById('paperLink').value = link;
+        }
+
+        // Form Submit
+        document.getElementById('paperForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const id = document.getElementById('paperId').value;
+            const data = {
+                title: document.getElementById('paperTitle').value,
+                department: document.getElementById('paperDept').value,
+                subject: document.getElementById('paperSubject').value,
+                year: document.getElementById('paperYear').value,
+                link: document.getElementById('paperLink').value
+            };
+
+            const method = id ? 'PUT' : 'POST';
+            const url = id ? `${API_BASE}/papers/${id}` : `${API_BASE}/papers`;
+
+            try {
+                const response = await fetch(url, {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                
+                if (response.ok) {
+                    closeModal();
+                    loadPapers();
+                    Swal.fire('Success', 'Paper saved successfully', 'success');
+                } else {
+                    Swal.fire('Error', 'Failed to save paper', 'error');
+                }
+            } catch (error) {
+                console.error('Error saving paper:', error);
+                Swal.fire('Error', 'An error occurred', 'error');
+            }
+        });
+
+        // Delete Paper
+        window.deletePaper = async function(id) {
+            const result = await Swal.fire({
+                title: 'Are you sure?',
+                text: "You won't be able to revert this!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Yes, delete it!'
+            });
+
+            if (result.isConfirmed) {
+                try {
+                    const response = await fetch(`${API_BASE}/papers/${id}`, {
+                        method: 'DELETE'
+                    });
+                    
+                    if (response.ok) {
+                        loadPapers();
+                        Swal.fire('Deleted!', 'The paper has been deleted.', 'success');
+                    }
+                } catch (error) {
+                    console.error('Error deleting paper:', error);
+                }
+            }
+        }
+    </script>
+</body>
+</html>

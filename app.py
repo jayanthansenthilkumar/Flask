@@ -1,14 +1,15 @@
-# STUDENT MANAGEMENT SYSTEM - Flask Application for CRUD Operations
+# QUESTION PAPER STORAGE SYSTEM - Flask Application for CRUD Operations
 
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for
 from functools import wraps
 import mysql.connector
+from data import DEPARTMENTS, YEARS, SUBJECTS_BY_DEPARTMENT
 
 app = Flask(__name__)
-app.secret_key = 'your-secret-key-here-change-in-production'  # Change this in production
+app.secret_key = 'your-secret-key-here-change-in-production'
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
-app.config['PERMANENT_SESSION_LIFETIME'] = 1800  # 30 minutes
+app.config['PERMANENT_SESSION_LIFETIME'] = 1800
 
 DB_HOST = 'localhost'
 DB_USER = 'root'
@@ -57,43 +58,8 @@ def get_db_connection():
         print("Error connecting to database: " + str(error))
         return None
 
-def init_db():
-    try:
-        connection = mysql.connector.connect(
-            host=DB_HOST,
-            user=DB_USER,
-            password=DB_PASSWORD
-        )
-        cursor = connection.cursor()
-        
-        create_db_query = "CREATE DATABASE IF NOT EXISTS " + DB_NAME
-        cursor.execute(create_db_query)
-        cursor.execute("USE " + DB_NAME)
-        
-        create_table_query = """
-            CREATE TABLE IF NOT EXISTS student (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                name VARCHAR(100) NOT NULL,
-                email VARCHAR(100),
-                age INT,
-                phoneno VARCHAR(15),
-                state VARCHAR(100),
-                city VARCHAR(100),
-                college VARCHAR(200),
-                department VARCHAR(100)
-            )
-        """
-        cursor.execute(create_table_query)
-        connection.commit()
-        cursor.close()
-        connection.close()
-        print("Database initialized successfully!")
-    except Exception as error:
-        print("Error initializing database: " + str(error))
-
 @app.route('/')
 def home():
-    # If already logged in, redirect to appropriate dashboard
     if 'user_id' in session:
         if session.get('role') == 'admin':
             return redirect(url_for('admin_dashboard'))
@@ -103,7 +69,6 @@ def home():
 
 @app.route('/login')
 def login_page():
-    # If already logged in, redirect to appropriate dashboard
     if 'user_id' in session:
         if session.get('role') == 'admin':
             return redirect(url_for('admin_dashboard'))
@@ -114,13 +79,12 @@ def login_page():
 @app.route('/api/login', methods=['POST'])
 def login():
     data = request.get_json()
-    
     if not data or 'username' not in data or 'password' not in data:
         return jsonify({"error": "Username and password are required"}), 400
     
     username = data['username'].strip()
     password = data['password']
-    role = data.get('role', 'student') # Default to student if not provided
+    role = data.get('role', 'student')
     
     connection = get_db_connection()
     if not connection:
@@ -128,11 +92,9 @@ def login():
     
     try:
         cursor = connection.cursor()
-        # Verify both credentials AND role
         cursor.execute("SELECT id, username, role FROM users WHERE username = %s AND password = %s AND role = %s", 
                       (username, password, role))
         user = cursor.fetchone()
-        
         cursor.close()
         connection.close()
         
@@ -169,490 +131,181 @@ def admin_dashboard():
 def student_dashboard():
     return render_template('studentDashboard.html', username=session.get('username'))
 
-@app.route('/students')
+@app.route('/papers')
 @login_required
-def students():
-    return render_template('students.html', username=session.get('username'), role=session.get('role'))
+def papers():
+    return render_template('papers.html', username=session.get('username'), role=session.get('role'))
 
-@app.route('/api/health')
-def health():
-    return jsonify({"status": "ok"}), 200
+@app.route('/api/static-data', methods=['GET'])
+def get_static_data():
+    return jsonify({
+        "departments": DEPARTMENTS,
+        "years": YEARS,
+        "subjects": SUBJECTS_BY_DEPARTMENT
+    })
 
-@app.route('/api/states', methods=['GET'])
-def get_states():
+@app.route('/api/papers', methods=['GET'])
+@login_required
+def get_papers():
     connection = get_db_connection()
     if not connection:
         return jsonify({"error": "Database connection failed"}), 500
     
     try:
-        cursor = connection.cursor()
-        cursor.execute("SELECT id, name FROM states ORDER BY name ASC")
-        states = cursor.fetchall()
-        cursor.close()
-        connection.close()
+        department_filter = request.args.get('department')
+        year_filter = request.args.get('year')
+        subject_filter = request.args.get('subject')
         
-        result = [state[1] for state in states]
-        return jsonify(result), 200
-    except Exception as error:
-        if connection:
-            connection.close()
-        return jsonify({"error": str(error)}), 500
-
-@app.route('/api/cities', methods=['GET'])
-def get_cities():
-    state = request.args.get('state', '')
-    
-    connection = get_db_connection()
-    if not connection:
-        return jsonify({"error": "Database connection failed"}), 500
-    
-    try:
-        cursor = connection.cursor()
-        
-        if state:
-            query = """
-                SELECT c.name FROM cities c
-                JOIN states s ON c.state_id = s.id
-                WHERE s.name = %s
-                ORDER BY c.name ASC
-            """
-            cursor.execute(query, (state,))
-        else:
-            cursor.execute("SELECT DISTINCT name FROM cities ORDER BY name ASC")
-        
-        cities = cursor.fetchall()
-        cursor.close()
-        connection.close()
-        
-        result = [city[0] for city in cities]
-        return jsonify(result), 200
-    except Exception as error:
-        if connection:
-            connection.close()
-        return jsonify({"error": str(error)}), 500
-
-@app.route('/api/colleges', methods=['GET'])
-def get_colleges():
-    state = request.args.get('state', '')
-    city = request.args.get('city', '')
-    
-    connection = get_db_connection()
-    if not connection:
-        return jsonify({"error": "Database connection failed"}), 500
-    
-    try:
-        cursor = connection.cursor()
-        
-        query = """
-            SELECT col.name FROM colleges col
-            JOIN states s ON col.state_id = s.id
-            JOIN cities c ON col.city_id = c.id
-            WHERE 1=1
-        """
+        query = "SELECT id, title, department, subject, year, link, created_at FROM question_papers WHERE 1=1"
         params = []
         
-        if state:
-            query += " AND s.name = %s"
-            params.append(state)
+        if department_filter:
+            query += " AND department = %s"
+            params.append(department_filter)
+        if year_filter:
+            query += " AND year = %s"
+            params.append(year_filter)
+        if subject_filter:
+            query += " AND subject = %s"
+            params.append(subject_filter)
+            
+        query += " ORDER BY created_at DESC"
         
-        if city:
-            query += " AND c.name = %s"
-            params.append(city)
+        cursor = connection.cursor(dictionary=True)
+        cursor.execute(query, tuple(params))
+        result = cursor.fetchall()
         
-        query += " ORDER BY col.name ASC"
-        
-        cursor.execute(query, params)
-        colleges = cursor.fetchall()
         cursor.close()
         connection.close()
         
-        result = [college[0] for college in colleges]
         return jsonify(result), 200
     except Exception as error:
         if connection:
             connection.close()
         return jsonify({"error": str(error)}), 500
 
-@app.route('/api/departments', methods=['GET'])
-def get_departments():
-    connection = get_db_connection()
-    if not connection:
-        return jsonify({"error": "Database connection failed"}), 500
-    
-    try:
-        cursor = connection.cursor()
-        cursor.execute("SELECT name FROM departments ORDER BY name ASC")
-        departments = cursor.fetchall()
-        cursor.close()
-        connection.close()
-        
-        result = [dept[0] for dept in departments]
-        return jsonify(result), 200
-    except Exception as error:
-        if connection:
-            connection.close()
-        return jsonify({"error": str(error)}), 500
-
-@app.route('/api/departments/short', methods=['GET'])
-def get_department_short_names():
-    connection = get_db_connection()
-    if not connection:
-        return jsonify({"error": "Database connection failed"}), 500
-    
-    try:
-        cursor = connection.cursor()
-        cursor.execute("SELECT name, short_name FROM departments ORDER BY name ASC")
-        departments = cursor.fetchall()
-        cursor.close()
-        connection.close()
-        
-        result = {dept[0]: dept[1] for dept in departments if dept[1]}
-        return jsonify(result), 200
-    except Exception as error:
-        if connection:
-            connection.close()
-        return jsonify({"error": str(error)}), 500
-
-@app.route('/api/students', methods=['POST'])
-def create_student():
+@app.route('/api/papers', methods=['POST'])
+@admin_required
+def add_paper():
     data = request.get_json()
     
-    if not data:
-        return jsonify({"error": "No data provided"}), 400
-    
-    if 'name' not in data:
-        return jsonify({"error": "Name is required"}), 400
-    
-    name = data['name'].strip()
-    if not name:
-        return jsonify({"error": "Name cannot be empty"}), 400
-    
+    required_fields = ['title', 'department', 'subject', 'year', 'link']
+    if not all(field in data for field in required_fields):
+        return jsonify({"error": "Missing required fields"}), 400
+        
     connection = get_db_connection()
     if not connection:
         return jsonify({"error": "Database connection failed"}), 500
-    
+        
     try:
         cursor = connection.cursor()
-        
-        email = data.get('email', '')
-        if email:
-            email = email.strip()
-        if not email:
-            email = None
-        
-        age = data.get('age')
-        if not age:
-            age = None
-        else:
-            age = int(age)
-        
-        phoneno = data.get('phoneno', '')
-        if phoneno:
-            phoneno = phoneno.strip()
-        if not phoneno:
-            phoneno = None
-        
-        # Get foreign key IDs
-        state_id = None
-        city_id = None
-        college_id = None
-        department_id = None
-        
-        state_name = data.get('state', '')
-        if state_name:
-            cursor.execute("SELECT id FROM states WHERE name = %s", (state_name,))
-            result = cursor.fetchone()
-            if result:
-                state_id = result[0]
-        
-        city_name = data.get('city', '')
-        if city_name and state_id:
-            cursor.execute("SELECT id FROM cities WHERE name = %s AND state_id = %s", (city_name, state_id))
-            result = cursor.fetchone()
-            if result:
-                city_id = result[0]
-        
-        college_name = data.get('college', '')
-        if college_name:
-            cursor.execute("SELECT id FROM colleges WHERE name = %s", (college_name,))
-            result = cursor.fetchone()
-            if result:
-                college_id = result[0]
-        
-        department_name = data.get('department', '')
-        if department_name:
-            cursor.execute("SELECT id FROM departments WHERE name = %s", (department_name,))
-            result = cursor.fetchone()
-            if result:
-                department_id = result[0]
-        
-        insert_query = "INSERT INTO student (name, email, age, phoneno, state_id, city_id, college_id, department_id) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
-        values = (name, email, age, phoneno, state_id, city_id, college_id, department_id)
-        cursor.execute(insert_query, values)
+        query = """INSERT INTO question_papers (title, department, subject, year, link) 
+                   VALUES (%s, %s, %s, %s, %s)"""
+        cursor.execute(query, (data['title'], data['department'], data['subject'], data['year'], data['link']))
         connection.commit()
         
-        new_id = cursor.lastrowid
-        cursor.execute("""
-            SELECT s.id, s.name, s.email, s.age, s.phoneno,
-                   st.name, c.name, col.name, d.name
-            FROM student s
-            LEFT JOIN states st ON s.state_id = st.id
-            LEFT JOIN cities c ON s.city_id = c.id
-            LEFT JOIN colleges col ON s.college_id = col.id
-            LEFT JOIN departments d ON s.department_id = d.id
-            WHERE s.id = %s
-        """, (new_id,))
-        student = cursor.fetchone()
-        
+        paper_id = cursor.lastrowid
         cursor.close()
         connection.close()
         
-        response = {
-            "id": student[0],
-            "name": student[1],
-            "email": student[2],
-            "age": student[3],
-            "phoneno": student[4],
-            "state": student[5] if student[5] else '',
-            "city": student[6] if student[6] else '',
-            "college": student[7] if student[7] else '',
-            "department": student[8] if student[8] else ''
-        }
-        
-        return jsonify(response), 201
+        return jsonify({"success": True, "message": "Question paper added successfully", "id": paper_id}), 201
     except Exception as error:
-        cursor.close()
-        connection.close()
+        if connection:
+            connection.close()
         return jsonify({"error": str(error)}), 500
 
-@app.route('/api/students', methods=['GET'])
-def get_students():
-    connection = get_db_connection()
-    if not connection:
-        return jsonify({"error": "Database connection failed"}), 500
-    
-    try:
-        cursor = connection.cursor()
-        cursor.execute("""
-            SELECT s.id, s.name, s.email, s.age, s.phoneno,
-                   st.name, c.name, col.name, d.name
-            FROM student s
-            LEFT JOIN states st ON s.state_id = st.id
-            LEFT JOIN cities c ON s.city_id = c.id
-            LEFT JOIN colleges col ON s.college_id = col.id
-            LEFT JOIN departments d ON s.department_id = d.id
-            ORDER BY s.id ASC
-        """)
-        students_list = cursor.fetchall()
-        
-        cursor.close()
-        connection.close()
-        
-        result = []
-        for student in students_list:
-            student_data = {
-                "id": student[0],
-                "name": student[1],
-                "email": student[2] if student[2] else '',
-                "age": student[3] if student[3] else '',
-                "phoneno": student[4] if student[4] else '',
-                "state": student[5] if student[5] else '',
-                "city": student[6] if student[6] else '',
-                "college": student[7] if student[7] else '',
-                "department": student[8] if student[8] else ''
-            }
-            result.append(student_data)
-        
-        return jsonify(result), 200
-    except Exception as error:
-        cursor.close()
-        connection.close()
-        return jsonify({"error": str(error)}), 500
-
-@app.route('/api/students/<int:student_id>', methods=['GET'])
-def get_student(student_id):
-    connection = get_db_connection()
-    if not connection:
-        return jsonify({"error": "Database connection failed"}), 500
-    
-    try:
-        cursor = connection.cursor()
-        cursor.execute("""
-            SELECT s.id, s.name, s.email, s.age, s.phoneno,
-                   st.name, c.name, col.name, d.name
-            FROM student s
-            LEFT JOIN states st ON s.state_id = st.id
-            LEFT JOIN cities c ON s.city_id = c.id
-            LEFT JOIN colleges col ON s.college_id = col.id
-            LEFT JOIN departments d ON s.department_id = d.id
-            WHERE s.id = %s
-        """, (student_id,))
-        student = cursor.fetchone()
-        
-        cursor.close()
-        connection.close()
-        
-        if student:
-            response = {
-                "id": student[0],
-                "name": student[1],
-                "email": student[2] if student[2] else '',
-                "age": student[3] if student[3] else '',
-                "phoneno": student[4] if student[4] else '',
-                "state": student[5] if student[5] else '',
-                "city": student[6] if student[6] else '',
-                "college": student[7] if student[7] else '',
-                "department": student[8] if student[8] else ''
-            }
-            return jsonify(response), 200
-        else:
-            return jsonify({"error": "Student not found"}), 404
-    except Exception as error:
-        cursor.close()
-        connection.close()
-        return jsonify({"error": str(error)}), 500
-
-@app.route('/api/students/<int:student_id>', methods=['PUT'])
-def update_student(student_id):
+@app.route('/api/papers/<int:id>', methods=['PUT'])
+@admin_required
+def update_paper(id):
     data = request.get_json()
     
-    if not data:
-        return jsonify({"error": "No data provided"}), 400
-    
-    if 'name' not in data:
-        return jsonify({"error": "Name is required"}), 400
-    
-    name = data['name'].strip()
-    if not name:
-        return jsonify({"error": "Name cannot be empty"}), 400
-    
     connection = get_db_connection()
     if not connection:
         return jsonify({"error": "Database connection failed"}), 500
-    
+        
     try:
         cursor = connection.cursor()
         
-        email = data.get('email', '')
-        if email:
-            email = email.strip()
-        if not email:
-            email = None
+        # Check if exists
+        cursor.execute("SELECT id FROM question_papers WHERE id = %s", (id,))
+        if not cursor.fetchone():
+            cursor.close()
+            connection.close()
+            return jsonify({"error": "Paper not found"}), 404
+            
+        # Update
+        query = """UPDATE question_papers 
+                   SET title=%s, department=%s, subject=%s, year=%s, link=%s 
+                   WHERE id=%s"""
+        cursor.execute(query, (data['title'], data['department'], data['subject'], data['year'], data['link'], id))
+        connection.commit()
         
-        age = data.get('age')
-        if not age:
-            age = None
-        else:
-            age = int(age)
+        cursor.close()
+        connection.close()
         
-        phoneno = data.get('phoneno', '')
-        if phoneno:
-            phoneno = phoneno.strip()
-        if not phoneno:
-            phoneno = None
+        return jsonify({"success": True, "message": "Paper updated successfully"}), 200
+    except Exception as error:
+        if connection:
+            connection.close()
+        return jsonify({"error": str(error)}), 500
+
+@app.route('/api/papers/<int:id>', methods=['DELETE'])
+@admin_required
+def delete_paper(id):
+    connection = get_db_connection()
+    if not connection:
+        return jsonify({"error": "Database connection failed"}), 500
         
-        # Get foreign key IDs
-        state_id = None
-        city_id = None
-        college_id = None
-        department_id = None
-        
-        state_name = data.get('state', '')
-        if state_name:
-            cursor.execute("SELECT id FROM states WHERE name = %s", (state_name,))
-            result = cursor.fetchone()
-            if result:
-                state_id = result[0]
-        
-        city_name = data.get('city', '')
-        if city_name and state_id:
-            cursor.execute("SELECT id FROM cities WHERE name = %s AND state_id = %s", (city_name, state_id))
-            result = cursor.fetchone()
-            if result:
-                city_id = result[0]
-        
-        college_name = data.get('college', '')
-        if college_name:
-            cursor.execute("SELECT id FROM colleges WHERE name = %s", (college_name,))
-            result = cursor.fetchone()
-            if result:
-                college_id = result[0]
-        
-        department_name = data.get('department', '')
-        if department_name:
-            cursor.execute("SELECT id FROM departments WHERE name = %s", (department_name,))
-            result = cursor.fetchone()
-            if result:
-                department_id = result[0]
-        
-        update_query = "UPDATE student SET name = %s, email = %s, age = %s, phoneno = %s, state_id = %s, city_id = %s, college_id = %s, department_id = %s WHERE id = %s"
-        values = (name, email, age, phoneno, state_id, city_id, college_id, department_id, student_id)
-        cursor.execute(update_query, values)
+    try:
+        cursor = connection.cursor()
+        cursor.execute("DELETE FROM question_papers WHERE id = %s", (id,))
         connection.commit()
         
         if cursor.rowcount == 0:
             cursor.close()
             connection.close()
-            return jsonify({"error": "Student not found"}), 404
-        
-        cursor.execute("""
-            SELECT s.id, s.name, s.email, s.age, s.phoneno,
-                   st.name, c.name, col.name, d.name
-            FROM student s
-            LEFT JOIN states st ON s.state_id = st.id
-            LEFT JOIN cities c ON s.city_id = c.id
-            LEFT JOIN colleges col ON s.college_id = col.id
-            LEFT JOIN departments d ON s.department_id = d.id
-            WHERE s.id = %s
-        """, (student_id,))
-        student = cursor.fetchone()
-        
+            return jsonify({"error": "Paper not found"}), 404
+            
         cursor.close()
         connection.close()
         
-        response = {
-            "id": student[0],
-            "name": student[1],
-            "email": student[2] if student[2] else '',
-            "age": student[3] if student[3] else '',
-            "phoneno": student[4] if student[4] else '',
-            "state": student[5] if student[5] else '',
-            "city": student[6] if student[6] else '',
-            "college": student[7] if student[7] else '',
-            "department": student[8] if student[8] else ''
-        }
-        
-        return jsonify(response), 200
+        return jsonify({"success": True, "message": "Paper deleted successfully"}), 200
     except Exception as error:
-        cursor.close()
-        connection.close()
+        if connection:
+            connection.close()
         return jsonify({"error": str(error)}), 500
 
-@app.route('/api/students/<int:student_id>', methods=['DELETE'])
-def delete_student(student_id):
+@app.route('/api/dashboard/stats')
+@login_required
+def dashboard_stats():
     connection = get_db_connection()
     if not connection:
         return jsonify({"error": "Database connection failed"}), 500
-    
+        
     try:
         cursor = connection.cursor()
-        delete_query = "DELETE FROM student WHERE id = %s"
-        cursor.execute(delete_query, (student_id,))
-        connection.commit()
         
-        if cursor.rowcount == 0:
-            cursor.close()
-            connection.close()
-            return jsonify({"error": "Student not found"}), 404
+        cursor.execute("SELECT COUNT(*) FROM question_papers")
+        total_papers = cursor.fetchone()[0]
+        
+        cursor.execute("SELECT COUNT(DISTINCT subject) FROM question_papers")
+        total_subjects = cursor.fetchone()[0]
+        
+        cursor.execute("SELECT COUNT(DISTINCT year) FROM question_papers")
+        total_years = cursor.fetchone()[0]
         
         cursor.close()
         connection.close()
-        return jsonify({"message": "Student deleted successfully"}), 200
+        
+        return jsonify({
+            "total_papers": total_papers,
+            "total_subjects": total_subjects,
+            "total_years": total_years
+        }), 200
     except Exception as error:
-        cursor.close()
-        connection.close()
+        if connection:
+            connection.close()
         return jsonify({"error": str(error)}), 500
 
 if __name__ == '__main__':
-    init_db()
-    app.run(debug=True)
+    app.run(debug=True, port=5000)
