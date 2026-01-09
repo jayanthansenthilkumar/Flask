@@ -4,263 +4,341 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Student Management System</title>
+    <!-- Remix Icons -->
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background-color: #f0f2f5;
             min-height: 100vh;
             display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1000px;
+            background: #fff;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            display: flex;
+            min-height: 600px;
+            margin: 20px;
+        }
+
+        /* Left Side - Illustration/Branding */
+        .left-panel {
+            flex: 1;
+            background: linear-gradient(135deg, #667eea 0%, #667eea 100%);
+            color: white;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
-            padding: 20px;
-        }
-
-        .login-container {
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            overflow: hidden;
-            width: 100%;
-            max-width: 400px;
-            animation: slideUp 0.5s ease;
-        }
-
-        @keyframes slideUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .login-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            padding: 40px 30px;
             text-align: center;
-            color: white;
+            position: relative;
+            overflow: hidden;
         }
 
-        .login-header i {
-            font-size: 60px;
-            margin-bottom: 15px;
+        .left-panel::before {
+            content: '';
+            position: absolute;
+            width: 150%;
+            height: 150%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 60%);
+            top: -25%;
+            left: -25%;
         }
 
-        .login-header h1 {
-            font-size: 28px;
-            margin-bottom: 8px;
+        .left-panel-content {
+            position: relative;
+            z-index: 2;
         }
 
-        .login-header p {
-            font-size: 14px;
+        .left-panel h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            line-height: 1.2;
+        }
+
+        .left-panel p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            max-width: 80%;
+            margin: 0 auto;
+        }
+
+        .illustration-icon {
+            font-size: 8rem;
+            margin-bottom: 30px;
             opacity: 0.9;
         }
 
-        .login-body {
-            padding: 40px 30px;
+        /* Right Side - Login Form */
+        .right-panel {
+            flex: 1;
+            padding: 50px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            background: white;
         }
 
+        .login-header {
+            margin-bottom: 40px;
+            text-align: center;
+        }
+
+        .login-header h2 {
+            font-size: 2rem;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .login-header p {
+            color: #666;
+            font-size: 0.95rem;
+        }
+
+        /* Tabs Style */
+        .role-tabs {
+            display: flex;
+            background: #f0f2f5;
+            padding: 5px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            background: transparent;
+            color: #666;
+            font-weight: 600;
+            cursor: pointer;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .tab-btn.active {
+            background: #fff;
+            color: #764ba2;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        }
+
+        .tab-btn i {
+            font-size: 1.2rem;
+        }
+
+        /* Form Styles */
         .form-group {
             margin-bottom: 25px;
+            position: relative;
         }
 
         .form-group label {
             display: block;
             margin-bottom: 8px;
-            color: #333;
+            color: #444;
             font-weight: 500;
-            font-size: 14px;
+            font-size: 0.9rem;
         }
 
-        .input-group {
+        .input-wrapper {
             position: relative;
         }
 
-        .input-group i {
+        .input-wrapper i {
             position: absolute;
             left: 15px;
             top: 50%;
             transform: translateY(-50%);
-            color: #667eea;
-            font-size: 20px;
+            color: #a0a0a0;
+            transition: 0.3s;
         }
 
         .form-control {
             width: 100%;
-            padding: 14px 15px 14px 45px;
-            border: 2px solid #e0e0e0;
-            border-radius: 10px;
-            font-size: 15px;
-            transition: all 0.3s ease;
+            padding: 15px 15px 15px 45px;
+            border: 2px solid #eee;
+            border-radius: 12px;
+            font-size: 1rem;
+            transition: all 0.3s;
             outline: none;
         }
 
         .form-control:focus {
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            border-color: #764ba2;
+            background: #fdfafd;
         }
 
-        .btn-login {
+        .form-control:focus + i {
+            color: #764ba2;
+        }
+
+        .btn-submit {
             width: 100%;
             padding: 15px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             border: none;
-            border-radius: 10px;
-            font-size: 16px;
+            border-radius: 12px;
+            font-size: 1rem;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 10px;
         }
 
-        .btn-login:hover {
+        .btn-submit:hover {
             transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+            box-shadow: 0 5px 15px rgba(118, 75, 162, 0.4);
         }
 
-        .btn-login:active {
+        .btn-submit:active {
             transform: translateY(0);
         }
 
-        .btn-login:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
+        .btn-submit:disabled {
+            opacity: 0.7;
+            cursor: wait;
         }
-
-        .login-footer {
-            text-align: center;
-            padding: 20px 30px 30px;
-            color: #666;
-            font-size: 14px;
-        }
-
-        .login-footer a {
-            color: #667eea;
-            text-decoration: none;
-            font-weight: 600;
-        }
-
-        .login-footer a:hover {
-            text-decoration: underline;
-        }
-
-        .demo-credentials {
-            background: #f8f9ff;
-            border-left: 4px solid #667eea;
-            padding: 15px;
-            margin-bottom: 25px;
-            border-radius: 5px;
-        }
-
-        .demo-credentials h4 {
-            color: #667eea;
-            margin-bottom: 10px;
-            font-size: 14px;
-        }
-
-        .demo-credentials p {
-            margin: 5px 0;
-            font-size: 13px;
-            color: #555;
-        }
-
-        .demo-credentials strong {
-            color: #333;
+        
+        /* Mobile Responsiveness */
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+                margin: 0;
+                height: 100vh;
+                border-radius: 0;
+            }
+            .left-panel {
+                display: none;
+            }
+            .right-panel {
+                padding: 30px;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="login-container">
-        <div class="login-header">
-            <i class="ri-graduation-cap-fill"></i>
-            <h1>Welcome Back!</h1>
-            <p>Student Management System</p>
+    <div class="container">
+        <!-- Move login to right side as requested via order or structure -->
+        
+        <!-- Left Panel: Branding -->
+        <div class="left-panel">
+            <div class="left-panel-content">
+                <i class="ri-school-fill illustration-icon"></i>
+                <h1>Welcome<br>Back!</h1>
+                <p>Streamline your academic journey with our advanced Student Management System.</p>
+            </div>
         </div>
 
-        <div class="login-body">
-            <!-- <div class="demo-credentials">
-                <h4>Demo Credentials:</h4>
-                <p><strong>Admin:</strong> admin / admin123</p>
-                <p><strong>Student:</strong> student / student123</p>
-            </div> -->
+        <!-- Right Panel: Login Form -->
+        <div class="right-panel">
+            <div class="login-header">
+                <h2>Account Login</h2>
+                <p>Please log in to continue</p>
+            </div>
+
+            <div class="role-tabs">
+                <button class="tab-btn active" onclick="setRole('admin')" id="tab-admin">
+                    <i class="ri-admin-line"></i> Admin
+                </button>
+                <button class="tab-btn" onclick="setRole('student')" id="tab-student">
+                    <i class="ri-user-smile-line"></i> Student
+                </button>
+            </div>
 
             <form id="loginForm">
                 <div class="form-group">
-                    <label for="username">Username</label>
-                    <div class="input-group">
-                        <i class="ri-user-line"></i>
-                        <input type="text" id="username" name="username" class="form-control" 
-                               placeholder="Enter your username" required autocomplete="username">
+                    <label>Username</label>
+                    <div class="input-wrapper">
+                        <input type="text" id="username" class="form-control" placeholder="Enter username" required>
+                        <i class="ri-user-3-line"></i>
                     </div>
                 </div>
 
                 <div class="form-group">
-                    <label for="password">Password</label>
-                    <div class="input-group">
-                        <i class="ri-lock-line"></i>
-                        <input type="password" id="password" name="password" class="form-control" 
-                               placeholder="Enter your password" required autocomplete="current-password">
+                    <label>Password</label>
+                    <div class="input-wrapper">
+                        <input type="password" id="password" class="form-control" placeholder="Enter password" required>
+                        <i class="ri-lock-2-line"></i>
                     </div>
                 </div>
 
-                <button type="submit" class="btn-login" id="loginBtn">
-                    <i class="ri-login-box-line"></i>
-                    Login
+                <button type="submit" class="btn-submit" id="loginBtn">
+                    Login Now
                 </button>
             </form>
-        </div>
-
-        <div class="login-footer">
-            <p>New to the system? <a href="/">Go to Home</a></p>
         </div>
     </div>
 
     <script>
+        let currentRole = 'admin'; // Default
+
+        function setRole(role) {
+            currentRole = role;
+            
+            // Update Tab UI
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(`tab-${role}`).classList.add('active');
+            
+            // Optional: Update placeholder or focus
+            document.getElementById('username').focus();
+        }
+
         const loginForm = document.getElementById('loginForm');
         const loginBtn = document.getElementById('loginBtn');
-        const usernameInput = document.getElementById('username');
-        const passwordInput = document.getElementById('password');
 
         loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
+            
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
 
-            const username = usernameInput.value.trim();
-            const password = passwordInput.value;
-
-            if (!username || !password) {
+            if(!username || !password) {
                 Swal.fire({
                     icon: 'warning',
-                    title: 'Missing Information',
-                    text: 'Please enter both username and password',
-                    confirmButtonColor: '#667eea'
+                    title: 'Oops...',
+                    text: 'Please fill in all fields!',
+                    confirmButtonColor: '#764ba2'
                 });
                 return;
             }
 
+            // Loading State
             loginBtn.disabled = true;
-            loginBtn.innerHTML = '<i class="ri-loader-4-line"></i> Logging in...';
+            loginBtn.textContent = 'Authenticating...';
 
             try {
                 const response = await fetch('/api/login', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ username, password })
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        username, 
+                        password,
+                        role: currentRole 
+                    })
                 });
 
                 const data = await response.json();
@@ -268,9 +346,8 @@
                 if (response.ok) {
                     Swal.fire({
                         icon: 'success',
-                        title: 'Login Successful!',
-                        text: `Welcome ${username}!`,
-                        confirmButtonColor: '#667eea',
+                        title: 'Success!',
+                        text: 'Logging you in...',
                         timer: 1500,
                         showConfirmButton: false
                     }).then(() => {
@@ -281,20 +358,21 @@
                         icon: 'error',
                         title: 'Login Failed',
                         text: data.error || 'Invalid credentials',
-                        confirmButtonColor: '#667eea'
+                        confirmButtonColor: '#764ba2'
                     });
                     loginBtn.disabled = false;
-                    loginBtn.innerHTML = '<i class="ri-login-box-line"></i> Login';
+                    loginBtn.textContent = 'Login Now';
                 }
             } catch (error) {
+                console.error(error);
                 Swal.fire({
                     icon: 'error',
                     title: 'Error',
-                    text: 'An error occurred. Please try again.',
-                    confirmButtonColor: '#667eea'
+                    text: 'Something went wrong. Please try again.',
+                    confirmButtonColor: '#764ba2'
                 });
                 loginBtn.disabled = false;
-                loginBtn.innerHTML = '<i class="ri-login-box-line"></i> Login';
+                loginBtn.textContent = 'Login Now';
             }
         });
     </script>

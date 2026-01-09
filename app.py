@@ -1,15 +1,48 @@
 # STUDENT MANAGEMENT SYSTEM - Flask Application for CRUD Operations
 
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for
+from functools import wraps
 import mysql.connector
 
 app = Flask(__name__)
 app.secret_key = 'your-secret-key-here-change-in-production'  # Change this in production
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+app.config['PERMANENT_SESSION_LIFETIME'] = 1800  # 30 minutes
 
 DB_HOST = 'localhost'
 DB_USER = 'root'
 DB_PASSWORD = ''
 DB_NAME = 'pycrud'
+
+# Session management decorators
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'user_id' not in session:
+            return redirect(url_for('login_page'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+def admin_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'user_id' not in session:
+            return redirect(url_for('login_page'))
+        if session.get('role') != 'admin':
+            return redirect(url_for('student_dashboard'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+def student_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'user_id' not in session:
+            return redirect(url_for('login_page'))
+        if session.get('role') != 'student':
+            return redirect(url_for('admin_dashboard'))
+        return f(*args, **kwargs)
+    return decorated_function
 
 def get_db_connection():
     try:
@@ -60,10 +93,22 @@ def init_db():
 
 @app.route('/')
 def home():
+    # If already logged in, redirect to appropriate dashboard
+    if 'user_id' in session:
+        if session.get('role') == 'admin':
+            return redirect(url_for('admin_dashboard'))
+        elif session.get('role') == 'student':
+            return redirect(url_for('student_dashboard'))
     return render_template('index.html')
 
 @app.route('/login')
 def login_page():
+    # If already logged in, redirect to appropriate dashboard
+    if 'user_id' in session:
+        if session.get('role') == 'admin':
+            return redirect(url_for('admin_dashboard'))
+        elif session.get('role') == 'student':
+            return redirect(url_for('student_dashboard'))
     return render_template('login.html')
 
 @app.route('/api/login', methods=['POST'])
@@ -75,6 +120,7 @@ def login():
     
     username = data['username'].strip()
     password = data['password']
+    role = data.get('role', 'student') # Default to student if not provided
     
     connection = get_db_connection()
     if not connection:
@@ -82,14 +128,17 @@ def login():
     
     try:
         cursor = connection.cursor()
-        cursor.execute("SELECT id, username, role FROM users WHERE username = %s AND password = %s", 
-                      (username, password))
+        # Verify both credentials AND role
+        cursor.execute("SELECT id, username, role FROM users WHERE username = %s AND password = %s AND role = %s", 
+                      (username, password, role))
         user = cursor.fetchone()
         
         cursor.close()
         connection.close()
         
         if user:
+            session.clear()
+            session.permanent = True
             session['user_id'] = user[0]
             session['username'] = user[1]
             session['role'] = user[2]
@@ -99,7 +148,7 @@ def login():
             else:
                 return jsonify({"success": True, "role": "student", "redirect": "/studentDashboard"}), 200
         else:
-            return jsonify({"error": "Invalid username or password"}), 401
+            return jsonify({"error": "Invalid credentials or incorrect role"}), 401
     except Exception as error:
         if connection:
             connection.close()
@@ -111,22 +160,19 @@ def logout():
     return redirect(url_for('home'))
 
 @app.route('/adminDashboard')
+@admin_required
 def admin_dashboard():
-    if 'user_id' not in session or session.get('role') != 'admin':
-        return redirect(url_for('login_page'))
-    return render_template('adminDashboard.html')
+    return render_template('adminDashboard.html', username=session.get('username'))
 
 @app.route('/studentDashboard')
+@student_required
 def student_dashboard():
-    if 'user_id' not in session or session.get('role') != 'student':
-        return redirect(url_for('login_page'))
-    return render_template('studentDashboard.html')
+    return render_template('studentDashboard.html', username=session.get('username'))
 
 @app.route('/students')
+@login_required
 def students():
-    if 'user_id' not in session:
-        return redirect(url_for('login_page'))
-    return render_template('students.html')
+    return render_template('students.html', username=session.get('username'), role=session.get('role'))
 
 @app.route('/api/health')
 def health():
