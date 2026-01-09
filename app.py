@@ -2,7 +2,6 @@
 
 from flask import Flask, render_template, request, jsonify
 import mysql.connector
-from data import STATES, CITIES_BY_STATE, COLLEGES, DEPARTMENTS, DEPARTMENT_SHORT_NAMES
 
 app = Flask(__name__)
 
@@ -72,44 +71,138 @@ def health():
 
 @app.route('/api/states', methods=['GET'])
 def get_states():
-    return jsonify(STATES), 200
+    connection = get_db_connection()
+    if not connection:
+        return jsonify({"error": "Database connection failed"}), 500
+    
+    try:
+        cursor = connection.cursor()
+        cursor.execute("SELECT id, name FROM states ORDER BY name ASC")
+        states = cursor.fetchall()
+        cursor.close()
+        connection.close()
+        
+        result = [state[1] for state in states]
+        return jsonify(result), 200
+    except Exception as error:
+        if connection:
+            connection.close()
+        return jsonify({"error": str(error)}), 500
 
 @app.route('/api/cities', methods=['GET'])
 def get_cities():
     state = request.args.get('state', '')
     
-    if state and state in CITIES_BY_STATE:
-        return jsonify(CITIES_BY_STATE[state]), 200
-    else:
-        all_cities = []
-        for city_list in CITIES_BY_STATE.values():
-            all_cities.extend(city_list)
-        return jsonify(sorted(set(all_cities))), 200
+    connection = get_db_connection()
+    if not connection:
+        return jsonify({"error": "Database connection failed"}), 500
+    
+    try:
+        cursor = connection.cursor()
+        
+        if state:
+            query = """
+                SELECT c.name FROM cities c
+                JOIN states s ON c.state_id = s.id
+                WHERE s.name = %s
+                ORDER BY c.name ASC
+            """
+            cursor.execute(query, (state,))
+        else:
+            cursor.execute("SELECT DISTINCT name FROM cities ORDER BY name ASC")
+        
+        cities = cursor.fetchall()
+        cursor.close()
+        connection.close()
+        
+        result = [city[0] for city in cities]
+        return jsonify(result), 200
+    except Exception as error:
+        if connection:
+            connection.close()
+        return jsonify({"error": str(error)}), 500
 
 @app.route('/api/colleges', methods=['GET'])
 def get_colleges():
     state = request.args.get('state', '')
     city = request.args.get('city', '')
     
-    filtered_colleges = COLLEGES
+    connection = get_db_connection()
+    if not connection:
+        return jsonify({"error": "Database connection failed"}), 500
     
-    if state:
-        filtered_colleges = [c for c in filtered_colleges if c["state"] == state]
-    
-    if city:
-        filtered_colleges = [c for c in filtered_colleges if c["city"] == city]
-    
-    college_names = [c["name"] for c in filtered_colleges]
-    
-    return jsonify(college_names), 200
+    try:
+        cursor = connection.cursor()
+        
+        query = """
+            SELECT col.name FROM colleges col
+            JOIN states s ON col.state_id = s.id
+            JOIN cities c ON col.city_id = c.id
+            WHERE 1=1
+        """
+        params = []
+        
+        if state:
+            query += " AND s.name = %s"
+            params.append(state)
+        
+        if city:
+            query += " AND c.name = %s"
+            params.append(city)
+        
+        query += " ORDER BY col.name ASC"
+        
+        cursor.execute(query, params)
+        colleges = cursor.fetchall()
+        cursor.close()
+        connection.close()
+        
+        result = [college[0] for college in colleges]
+        return jsonify(result), 200
+    except Exception as error:
+        if connection:
+            connection.close()
+        return jsonify({"error": str(error)}), 500
 
 @app.route('/api/departments', methods=['GET'])
 def get_departments():
-    return jsonify(DEPARTMENTS), 200
+    connection = get_db_connection()
+    if not connection:
+        return jsonify({"error": "Database connection failed"}), 500
+    
+    try:
+        cursor = connection.cursor()
+        cursor.execute("SELECT name FROM departments ORDER BY name ASC")
+        departments = cursor.fetchall()
+        cursor.close()
+        connection.close()
+        
+        result = [dept[0] for dept in departments]
+        return jsonify(result), 200
+    except Exception as error:
+        if connection:
+            connection.close()
+        return jsonify({"error": str(error)}), 500
 
 @app.route('/api/departments/short', methods=['GET'])
 def get_department_short_names():
-    return jsonify(DEPARTMENT_SHORT_NAMES), 200
+    connection = get_db_connection()
+    if not connection:
+        return jsonify({"error": "Database connection failed"}), 500
+    
+    try:
+        cursor = connection.cursor()
+        cursor.execute("SELECT name, short_name FROM departments ORDER BY name ASC")
+        departments = cursor.fetchall()
+        cursor.close()
+        connection.close()
+        
+        result = {dept[0]: dept[1] for dept in departments if dept[1]}
+        return jsonify(result), 200
+    except Exception as error:
+        if connection:
+            connection.close()
+        return jsonify({"error": str(error)}), 500
 
 @app.route('/api/students', methods=['POST'])
 def create_student():
@@ -150,37 +243,56 @@ def create_student():
         if not phoneno:
             phoneno = None
         
-        state = data.get('state', '')
-        if state:
-            state = state.strip()
-        if not state:
-            state = None
+        # Get foreign key IDs
+        state_id = None
+        city_id = None
+        college_id = None
+        department_id = None
         
-        city = data.get('city', '')
-        if city:
-            city = city.strip()
-        if not city:
-            city = None
+        state_name = data.get('state', '')
+        if state_name:
+            cursor.execute("SELECT id FROM states WHERE name = %s", (state_name,))
+            result = cursor.fetchone()
+            if result:
+                state_id = result[0]
         
-        college = data.get('college', '')
-        if college:
-            college = college.strip()
-        if not college:
-            college = None
+        city_name = data.get('city', '')
+        if city_name and state_id:
+            cursor.execute("SELECT id FROM cities WHERE name = %s AND state_id = %s", (city_name, state_id))
+            result = cursor.fetchone()
+            if result:
+                city_id = result[0]
         
-        department = data.get('department', '')
-        if department:
-            department = department.strip()
-        if not department:
-            department = None
+        college_name = data.get('college', '')
+        if college_name:
+            cursor.execute("SELECT id FROM colleges WHERE name = %s", (college_name,))
+            result = cursor.fetchone()
+            if result:
+                college_id = result[0]
         
-        insert_query = "INSERT INTO student (name, email, age, phoneno, state, city, college, department) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
-        values = (name, email, age, phoneno, state, city, college, department)
+        department_name = data.get('department', '')
+        if department_name:
+            cursor.execute("SELECT id FROM departments WHERE name = %s", (department_name,))
+            result = cursor.fetchone()
+            if result:
+                department_id = result[0]
+        
+        insert_query = "INSERT INTO student (name, email, age, phoneno, state_id, city_id, college_id, department_id) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
+        values = (name, email, age, phoneno, state_id, city_id, college_id, department_id)
         cursor.execute(insert_query, values)
         connection.commit()
         
         new_id = cursor.lastrowid
-        cursor.execute("SELECT * FROM student WHERE id = %s", (new_id,))
+        cursor.execute("""
+            SELECT s.id, s.name, s.email, s.age, s.phoneno,
+                   st.name, c.name, col.name, d.name
+            FROM student s
+            LEFT JOIN states st ON s.state_id = st.id
+            LEFT JOIN cities c ON s.city_id = c.id
+            LEFT JOIN colleges col ON s.college_id = col.id
+            LEFT JOIN departments d ON s.department_id = d.id
+            WHERE s.id = %s
+        """, (new_id,))
         student = cursor.fetchone()
         
         cursor.close()
@@ -192,10 +304,10 @@ def create_student():
             "email": student[2],
             "age": student[3],
             "phoneno": student[4],
-            "state": student[5],
-            "city": student[6],
-            "college": student[7],
-            "department": student[8]
+            "state": student[5] if student[5] else '',
+            "city": student[6] if student[6] else '',
+            "college": student[7] if student[7] else '',
+            "department": student[8] if student[8] else ''
         }
         
         return jsonify(response), 201
@@ -212,7 +324,16 @@ def get_students():
     
     try:
         cursor = connection.cursor()
-        cursor.execute("SELECT * FROM student ORDER BY id ASC")
+        cursor.execute("""
+            SELECT s.id, s.name, s.email, s.age, s.phoneno,
+                   st.name, c.name, col.name, d.name
+            FROM student s
+            LEFT JOIN states st ON s.state_id = st.id
+            LEFT JOIN cities c ON s.city_id = c.id
+            LEFT JOIN colleges col ON s.college_id = col.id
+            LEFT JOIN departments d ON s.department_id = d.id
+            ORDER BY s.id ASC
+        """)
         students_list = cursor.fetchall()
         
         cursor.close()
@@ -247,7 +368,16 @@ def get_student(student_id):
     
     try:
         cursor = connection.cursor()
-        cursor.execute("SELECT * FROM student WHERE id = %s", (student_id,))
+        cursor.execute("""
+            SELECT s.id, s.name, s.email, s.age, s.phoneno,
+                   st.name, c.name, col.name, d.name
+            FROM student s
+            LEFT JOIN states st ON s.state_id = st.id
+            LEFT JOIN cities c ON s.city_id = c.id
+            LEFT JOIN colleges col ON s.college_id = col.id
+            LEFT JOIN departments d ON s.department_id = d.id
+            WHERE s.id = %s
+        """, (student_id,))
         student = cursor.fetchone()
         
         cursor.close()
@@ -312,32 +442,42 @@ def update_student(student_id):
         if not phoneno:
             phoneno = None
         
-        state = data.get('state', '')
-        if state:
-            state = state.strip()
-        if not state:
-            state = None
+        # Get foreign key IDs
+        state_id = None
+        city_id = None
+        college_id = None
+        department_id = None
         
-        city = data.get('city', '')
-        if city:
-            city = city.strip()
-        if not city:
-            city = None
+        state_name = data.get('state', '')
+        if state_name:
+            cursor.execute("SELECT id FROM states WHERE name = %s", (state_name,))
+            result = cursor.fetchone()
+            if result:
+                state_id = result[0]
         
-        college = data.get('college', '')
-        if college:
-            college = college.strip()
-        if not college:
-            college = None
+        city_name = data.get('city', '')
+        if city_name and state_id:
+            cursor.execute("SELECT id FROM cities WHERE name = %s AND state_id = %s", (city_name, state_id))
+            result = cursor.fetchone()
+            if result:
+                city_id = result[0]
         
-        department = data.get('department', '')
-        if department:
-            department = department.strip()
-        if not department:
-            department = None
+        college_name = data.get('college', '')
+        if college_name:
+            cursor.execute("SELECT id FROM colleges WHERE name = %s", (college_name,))
+            result = cursor.fetchone()
+            if result:
+                college_id = result[0]
         
-        update_query = "UPDATE student SET name = %s, email = %s, age = %s, phoneno = %s, state = %s, city = %s, college = %s, department = %s WHERE id = %s"
-        values = (name, email, age, phoneno, state, city, college, department, student_id)
+        department_name = data.get('department', '')
+        if department_name:
+            cursor.execute("SELECT id FROM departments WHERE name = %s", (department_name,))
+            result = cursor.fetchone()
+            if result:
+                department_id = result[0]
+        
+        update_query = "UPDATE student SET name = %s, email = %s, age = %s, phoneno = %s, state_id = %s, city_id = %s, college_id = %s, department_id = %s WHERE id = %s"
+        values = (name, email, age, phoneno, state_id, city_id, college_id, department_id, student_id)
         cursor.execute(update_query, values)
         connection.commit()
         
@@ -346,7 +486,16 @@ def update_student(student_id):
             connection.close()
             return jsonify({"error": "Student not found"}), 404
         
-        cursor.execute("SELECT * FROM student WHERE id = %s", (student_id,))
+        cursor.execute("""
+            SELECT s.id, s.name, s.email, s.age, s.phoneno,
+                   st.name, c.name, col.name, d.name
+            FROM student s
+            LEFT JOIN states st ON s.state_id = st.id
+            LEFT JOIN cities c ON s.city_id = c.id
+            LEFT JOIN colleges col ON s.college_id = col.id
+            LEFT JOIN departments d ON s.department_id = d.id
+            WHERE s.id = %s
+        """, (student_id,))
         student = cursor.fetchone()
         
         cursor.close()
