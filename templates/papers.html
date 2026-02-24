@@ -1,63 +1,96 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Question Papers - Documentary Locker</title>
+    <title>Question Papers | Paper Locker</title>
+    <meta name="description" content="Browse and manage question papers">
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <!-- Stylesheet -->
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <!-- Remix Icons -->
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+    <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
+
 <body>
-    <div class="sidebar">
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
         <div class="logo">
-            <h2><i class="ri-folder-shield-fill"></i> Locker</h2>
-            <p>Paper Storage</p>
+            <h2><i class="ri-folder-shield-2-fill"></i> Paper Locker</h2>
+            <p>QUESTION PAPER STORAGE</p>
         </div>
         <nav class="nav-menu">
             {% if role == 'admin' %}
             <a href="/adminDashboard" class="nav-item">
-            {% else %}
-            <a href="/studentDashboard" class="nav-item">
-            {% endif %}
-                <i class="ri-dashboard-line"></i>
-                <span class="text">Dashboard</span>
-            </a>
-            <a href="/papers" class="nav-item active">
-                <i class="ri-file-text-line"></i>
-                <span class="text">Question Papers</span>
-            </a>
+                {% else %}
+                <a href="/studentDashboard" class="nav-item">
+                    {% endif %}
+                    <i class="ri-dashboard-3-line"></i>
+                    <span class="text">Dashboard</span>
+                </a>
+                <a href="/papers" class="nav-item active">
+                    <i class="ri-file-text-line"></i>
+                    <span class="text">Question Papers</span>
+                </a>
         </nav>
         <div class="sidebar-footer">
-            <p>Version 2.0.0</p>
+            <p>Version 3.0.0 | Gemini Theme</p>
         </div>
     </div>
 
+    <!-- Main Content -->
     <div class="main-content">
+        <!-- Header -->
         <header class="header">
             <div class="header-left">
-                <h1>Question Papers</h1>
+                <button class="menu-toggle" id="menu-toggle">
+                    <i class="ri-menu-line"></i>
+                </button>
+                <h1><i class="ri-file-text-line"></i> Question Papers</h1>
             </div>
             <div class="header-right">
-                <span class="user-name">Welcome, {{ username }}</span>
-                <a href="/logout" class="logout-btn"><i class="ri-logout-box-line"></i> Logout</a>
+                <span class="user-name" style="color: var(--text-muted);">Welcome, {{ username }}</span>
+                <a href="/logout" class="logout-btn">
+                    <i class="ri-logout-box-line"></i> Logout
+                </a>
             </div>
         </header>
 
+        <!-- Page Content -->
         <div class="content">
             <!-- Filters & Actions -->
             <div class="actions-bar">
                 <div class="filters">
-                    <select id="filterDepartment" onchange="loadSubjectsFilter()">
-                        <option value="">All Departments</option>
-                    </select>
-                    <select id="filterYear">
-                        <option value="">All Years</option>
-                    </select>
-                    <select id="filterSubject">
-                        <option value="">All Subjects</option>
-                    </select>
-                    <button class="btn btn-secondary" onclick="loadPapers()">Apply Filters</button>
+                    <div class="filter-group">
+                        <label
+                            style="color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; display: block;">Department</label>
+                        <select id="filterDepartment" onchange="loadSubjectsFilter()">
+                            <option value="">All Departments</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label
+                            style="color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; display: block;">Year</label>
+                        <select id="filterYear">
+                            <option value="">All Years</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label
+                            style="color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; display: block;">Subject</label>
+                        <select id="filterSubject">
+                            <option value="">All Subjects</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-secondary" onclick="loadPapers()" style="align-self: flex-end;">
+                        <i class="ri-filter-3-line"></i> Apply Filters
+                    </button>
                 </div>
                 {% if role == 'admin' %}
                 <button class="btn btn-primary" onclick="openModal('add')">
@@ -66,22 +99,34 @@
                 {% endif %}
             </div>
 
-            <!-- Papers Table -->
-            <div class="table-container">
+            <!-- Papers Grid/Table -->
+            <div class="table-container" id="papers-container">
                 <table class="data-table" id="papersTable">
                     <thead>
                         <tr>
-                            <th>Title</th>
-                            <th>Department</th>
-                            <th>Subject</th>
-                            <th>Year</th>
-                            <th>Actions</th>
+                            <th><i class="ri-file-text-line"></i> Title</th>
+                            <th><i class="ri-building-line"></i> Department</th>
+                            <th><i class="ri-book-line"></i> Subject</th>
+                            <th><i class="ri-calendar-line"></i> Year</th>
+                            <th><i class="ri-tools-line"></i> Actions</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody id="papers-body">
                         <!-- Data populated by JS -->
                     </tbody>
                 </table>
+
+                <div id="empty-state" class="no-data" style="display: none;">
+                    <i class="ri-file-search-line"
+                        style="font-size: 64px; display: block; margin-bottom: 16px; opacity: 0.3;"></i>
+                    <p style="font-size: 1.1rem; margin-bottom: 8px;">No papers found</p>
+                    <p style="color: var(--text-muted); font-size: 0.9rem;">Try adjusting your filters or add a new
+                        paper</p>
+                </div>
+
+                <div id="loading-state" class="loading" style="display: none;">
+                    Loading papers...
+                </div>
             </div>
         </div>
     </div>
@@ -90,39 +135,53 @@
     <div id="paperModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3 id="modalTitle">Add Question Paper</h3>
+                <h3 id="modalTitle"><i class="ri-add-circle-line"></i> Add Question Paper</h3>
                 <span class="close" onclick="closeModal()">&times;</span>
             </div>
             <div class="modal-body">
                 <form id="paperForm">
                     <input type="hidden" id="paperId">
+
                     <div class="form-group">
-                        <label>Title</label>
-                        <input type="text" id="paperTitle" required placeholder="e.g. End Semester Exam">
+                        <label for="paperTitle">Paper Title</label>
+                        <input type="text" id="paperTitle" required placeholder="e.g. End Semester Examination 2024">
                     </div>
-                    <div class="form-group">
-                        <label>Department</label>
-                        <select id="paperDept" required onchange="loadSubjectsForm()">
-                            <option value="">Select Department</option>
-                        </select>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="paperDept">Department</label>
+                            <select id="paperDept" required onchange="loadSubjectsForm()">
+                                <option value="">Select Department</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="paperYear">Academic Year</label>
+                            <select id="paperYear" required>
+                                <option value="">Select Year</option>
+                            </select>
+                        </div>
                     </div>
+
                     <div class="form-group">
-                        <label>Subject</label>
+                        <label for="paperSubject">Subject</label>
                         <select id="paperSubject" required>
                             <option value="">Select Subject</option>
                         </select>
                     </div>
+
                     <div class="form-group">
-                        <label>Year</label>
-                        <select id="paperYear" required>
-                            <option value="">Select Academic Year</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Document Link (URL)</label>
+                        <label for="paperLink">Document Link (URL)</label>
                         <input type="url" id="paperLink" required placeholder="https://drive.google.com/...">
                     </div>
-                    <button type="submit" class="btn btn-primary">Save Paper</button>
+
+                    <div class="form-buttons">
+                        <button type="button" class="btn btn-secondary" onclick="closeModal()">
+                            <i class="ri-close-line"></i> Cancel
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="ri-save-line"></i> Save Paper
+                        </button>
+                    </div>
                 </form>
             </div>
         </div>
@@ -135,24 +194,35 @@
 
         // Initialization
         document.addEventListener('DOMContentLoaded', async () => {
+            setupMenu();
             await loadStaticData();
             loadPapers();
-            
+
             // Close modal on outside click
-            window.onclick = function(event) {
+            window.onclick = function (event) {
                 if (event.target == document.getElementById('paperModal')) {
                     closeModal();
                 }
             }
         });
 
+        function setupMenu() {
+            const toggle = document.getElementById('menu-toggle');
+            const sidebar = document.getElementById('sidebar');
+            if (toggle && sidebar) {
+                toggle.addEventListener('click', () => {
+                    sidebar.classList.toggle('active');
+                });
+            }
+        }
+
         async function loadStaticData() {
             try {
                 const response = await fetch(`${API_BASE}/static-data`);
                 const data = await response.json();
-                
+
                 allSubjects = data.subjects;
-                
+
                 // Populate Filters
                 const deptFilter = document.getElementById('filterDepartment');
                 const yearFilter = document.getElementById('filterYear');
@@ -168,7 +238,7 @@
                     yearFilter.add(new Option(year, year));
                     paperYear.add(new Option(year, year));
                 });
-                
+
             } catch (error) {
                 console.error('Error loading static data:', error);
             }
@@ -178,7 +248,7 @@
             const dept = document.getElementById('filterDepartment').value;
             const subjectSelect = document.getElementById('filterSubject');
             subjectSelect.innerHTML = '<option value="">All Subjects</option>';
-            
+
             if (dept && allSubjects[dept]) {
                 allSubjects[dept].forEach(sub => {
                     subjectSelect.add(new Option(sub, sub));
@@ -190,7 +260,7 @@
             const dept = document.getElementById('paperDept').value;
             const subjectSelect = document.getElementById('paperSubject');
             subjectSelect.innerHTML = '<option value="">Select Subject</option>';
-            
+
             if (dept && allSubjects[dept]) {
                 allSubjects[dept].forEach(sub => {
                     subjectSelect.add(new Option(sub, sub));
@@ -208,47 +278,83 @@
             if (year) params.append('year', year);
             if (subject) params.append('subject', subject);
 
+            // Show loading
+            document.getElementById('loading-state').style.display = 'block';
+            document.getElementById('papersTable').style.display = 'none';
+            document.getElementById('empty-state').style.display = 'none';
+
             try {
                 const response = await fetch(`${API_BASE}/papers?${params.toString()}`);
                 const papers = await response.json();
-                
-                const tbody = document.querySelector('#papersTable tbody');
+
+                const tbody = document.getElementById('papers-body');
                 tbody.innerHTML = '';
 
-                papers.forEach(paper => {
+                document.getElementById('loading-state').style.display = 'none';
+
+                if (papers.length === 0) {
+                    document.getElementById('empty-state').style.display = 'block';
+                    document.getElementById('papersTable').style.display = 'none';
+                    return;
+                }
+
+                document.getElementById('papersTable').style.display = 'table';
+                document.getElementById('empty-state').style.display = 'none';
+
+                papers.forEach((paper, index) => {
                     const tr = document.createElement('tr');
+                    tr.style.animation = `fadeIn 0.3s ease ${index * 0.05}s backwards`;
+
                     let actions = `
-                        <a href="${paper.link}" target="_blank" class="btn-icon view" title="View Document"><i class="ri-eye-line"></i></a>
+                        <a href="${paper.link}" target="_blank" class="btn-icon view" title="View Document">
+                            <i class="ri-eye-line"></i>
+                        </a>
                     `;
-                    
+
                     if (USER_ROLE === 'admin') {
                         actions += `
-                            <button onclick="editPaper(${paper.id}, '${paper.title}', '${paper.department}', '${paper.subject}', '${paper.year}', '${paper.link}')" class="btn-icon edit" title="Edit"><i class="ri-pencil-line"></i></button>
-                            <button onclick="deletePaper(${paper.id})" class="btn-icon delete" title="Delete"><i class="ri-delete-bin-line"></i></button>
+                            <button onclick="editPaper(${paper.id}, '${escapeAttr(paper.title)}', '${escapeAttr(paper.department)}', '${escapeAttr(paper.subject)}', '${escapeAttr(paper.year)}', '${escapeAttr(paper.link)}')" class="btn-icon edit" title="Edit">
+                                <i class="ri-pencil-line"></i>
+                            </button>
+                            <button onclick="deletePaper(${paper.id})" class="btn-icon delete" title="Delete">
+                                <i class="ri-delete-bin-line"></i>
+                            </button>
                         `;
                     }
 
                     tr.innerHTML = `
-                        <td>${paper.title}</td>
-                        <td>${paper.department}</td>
-                        <td>${paper.subject}</td>
-                        <td>${paper.year}</td>
+                        <td style="font-weight: 500; color: var(--text-primary);">${escapeHtml(paper.title)}</td>
+                        <td>
+                            <span style="display: inline-flex; align-items: center; gap: 6px;">
+                                <i class="ri-building-line" style="color: var(--accent-purple);"></i>
+                                ${escapeHtml(paper.department)}
+                            </span>
+                        </td>
+                        <td>${escapeHtml(paper.subject)}</td>
+                        <td>
+                            <span style="background: linear-gradient(135deg, rgba(102, 126, 234, 0.2), rgba(118, 75, 162, 0.2)); padding: 4px 12px; border-radius: 20px; font-size: 0.8rem;">
+                                ${escapeHtml(paper.year)}
+                            </span>
+                        </td>
                         <td><div class="action-buttons">${actions}</div></td>
                     `;
                     tbody.appendChild(tr);
                 });
             } catch (error) {
                 console.error('Error loading papers:', error);
+                document.getElementById('loading-state').style.display = 'none';
+                document.getElementById('empty-state').style.display = 'block';
             }
         }
 
         // Modal Functions
         function openModal(mode) {
-            document.getElementById('paperModal').style.display = 'block';
+            document.getElementById('paperModal').style.display = 'flex';
             if (mode === 'add') {
-                document.getElementById('modalTitle').innerText = 'Add Question Paper';
+                document.getElementById('modalTitle').innerHTML = '<i class="ri-add-circle-line"></i> Add Question Paper';
                 document.getElementById('paperForm').reset();
                 document.getElementById('paperId').value = '';
+                document.getElementById('paperSubject').innerHTML = '<option value="">Select Subject</option>';
             }
         }
 
@@ -257,14 +363,16 @@
         }
 
         // Edit Paper
-        window.editPaper = function(id, title, dept, subject, year, link) {
+        window.editPaper = function (id, title, dept, subject, year, link) {
             openModal('edit');
-            document.getElementById('modalTitle').innerText = 'Edit Question Paper';
+            document.getElementById('modalTitle').innerHTML = '<i class="ri-edit-line"></i> Edit Question Paper';
             document.getElementById('paperId').value = id;
             document.getElementById('paperTitle').value = title;
             document.getElementById('paperDept').value = dept;
-            loadSubjectsForm(); // Load subjects for the selected dept
-            document.getElementById('paperSubject').value = subject;
+            loadSubjectsForm();
+            setTimeout(() => {
+                document.getElementById('paperSubject').value = subject;
+            }, 100);
             document.getElementById('paperYear').value = year;
             document.getElementById('paperLink').value = link;
         }
@@ -272,7 +380,7 @@
         // Form Submit
         document.getElementById('paperForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            
+
             const id = document.getElementById('paperId').value;
             const data = {
                 title: document.getElementById('paperTitle').value,
@@ -291,30 +399,55 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(data)
                 });
-                
+
                 if (response.ok) {
                     closeModal();
                     loadPapers();
-                    Swal.fire('Success', 'Paper saved successfully', 'success');
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Success!',
+                        text: id ? 'Paper updated successfully' : 'Paper added successfully',
+                        background: 'rgba(22, 33, 62, 0.95)',
+                        color: '#ffffff',
+                        confirmButtonColor: '#764ba2'
+                    });
                 } else {
-                    Swal.fire('Error', 'Failed to save paper', 'error');
+                    const error = await response.json();
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: error.error || 'Failed to save paper',
+                        background: 'rgba(22, 33, 62, 0.95)',
+                        color: '#ffffff',
+                        confirmButtonColor: '#764ba2'
+                    });
                 }
             } catch (error) {
                 console.error('Error saving paper:', error);
-                Swal.fire('Error', 'An error occurred', 'error');
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'An error occurred while saving',
+                    background: 'rgba(22, 33, 62, 0.95)',
+                    color: '#ffffff',
+                    confirmButtonColor: '#764ba2'
+                });
             }
         });
 
         // Delete Paper
-        window.deletePaper = async function(id) {
+        window.deletePaper = async function (id) {
             const result = await Swal.fire({
-                title: 'Are you sure?',
-                text: "You won't be able to revert this!",
+                title: 'Delete Paper?',
+                text: "This action cannot be undone!",
                 icon: 'warning',
                 showCancelButton: true,
-                confirmButtonColor: '#3085d6',
-                cancelButtonColor: '#d33',
-                confirmButtonText: 'Yes, delete it!'
+                confirmButtonColor: '#ff5c8d',
+                cancelButtonColor: '#64748b',
+                confirmButtonText: '<i class="ri-delete-bin-line"></i> Yes, delete it!',
+                cancelButtonText: 'Cancel',
+                background: 'rgba(22, 33, 62, 0.95)',
+                color: '#ffffff'
             });
 
             if (result.isConfirmed) {
@@ -322,16 +455,94 @@
                     const response = await fetch(`${API_BASE}/papers/${id}`, {
                         method: 'DELETE'
                     });
-                    
+
                     if (response.ok) {
                         loadPapers();
-                        Swal.fire('Deleted!', 'The paper has been deleted.', 'success');
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Deleted!',
+                            text: 'The paper has been deleted.',
+                            background: 'rgba(22, 33, 62, 0.95)',
+                            color: '#ffffff',
+                            confirmButtonColor: '#764ba2'
+                        });
                     }
                 } catch (error) {
                     console.error('Error deleting paper:', error);
                 }
             }
         }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function escapeAttr(text) {
+            if (!text) return '';
+            return text.replace(/'/g, "\\'").replace(/"/g, '\\"');
+        }
     </script>
+
+    <style>
+        /* Filter group styling */
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Animation */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Custom SweetAlert2 Styling */
+        .swal2-popup {
+            background: rgba(22, 33, 62, 0.95) !important;
+            backdrop-filter: blur(20px) !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            border-radius: 20px !important;
+        }
+
+        .swal2-title {
+            color: #ffffff !important;
+        }
+
+        .swal2-html-container {
+            color: rgba(255, 255, 255, 0.7) !important;
+        }
+
+        .swal2-confirm {
+            background: linear-gradient(135deg, #667eea, #764ba2) !important;
+            border-radius: 10px !important;
+            font-weight: 600 !important;
+        }
+
+        .swal2-cancel {
+            border-radius: 10px !important;
+        }
+
+        /* Responsive filters */
+        @media (max-width: 768px) {
+            .filters {
+                width: 100%;
+            }
+
+            .filter-group {
+                width: 100%;
+            }
+        }
+    </style>
 </body>
+
 </html>
